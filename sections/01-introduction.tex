@@ -1,0 +1,33 @@
+\chapter{Giới thiệu}
+
+\section{Bối cảnh và mục tiêu}
+
+Bài tập lớn xây dựng một Course Assistant trong miền thông tin của môn học CO3085. Hệ thống cho phép sinh viên đặt câu hỏi bằng ngôn ngữ tự nhiên để tra cứu thông tin môn học. Pipeline theo đề bài đi từ grammar/parser và biểu diễn câu hỏi đến intent/entity, truy vấn knowledge base hoặc retrieval, rồi tạo câu trả lời. Đề bài yêu cầu hệ thống giới hạn trong dữ liệu môn học; khi thiếu bằng chứng, cần thông báo phù hợp thay vì tự tạo thông tin \cite{assignment}.
+
+Trong workspace hiện tại, phần có bằng chứng triển khai thuộc hai phạm vi: sinh câu từ CFG (Phần I.2) và knowledge base/retrieval (phần 1 trong kế hoạch LLM/RAG). Báo cáo trình bày cụ thể kiến thức nền, quyết định thiết kế, cách chạy và kết quả của hai phạm vi này. Các phần còn lại được để khung để cập nhật theo kết quả thực tế của nhóm.
+
+\section{Mục tiêu của phần việc}
+
+Mục tiêu cụ thể:
+\begin{itemize}
+  \item áp dụng quy tắc CFG để sinh hữu hạn các câu hỏi tiếng Việt thuộc miền Course Assistant;
+  \item chuyển dữ liệu môn học thành các chunk có thể truy nguyên về tệp/section gốc;
+  \item truy xuất các chunk liên quan bằng điểm lexical kết hợp tín hiệu intent/entity khi có semantic frame;
+  \item cung cấp trace để kiểm tra câu hỏi, trạng thái parse, điểm xếp hạng và nguồn của từng kết quả.
+\end{itemize}
+
+\section{Phạm vi và phần chưa bao gồm}
+
+Không xem các nội dung dưới đây là kết quả đã hoàn thành chỉ dựa trên hai phần việc nêu trên:
+\begin{itemize}
+  \item xây dựng/đánh giá parser và semantic representation cho toàn bộ yêu cầu;
+  \item điều phối end-to-end, prompt, LLM sinh câu trả lời và kiểm tra citation;
+  \item quản lý ngữ cảnh hội thoại;
+  \item đánh giá độc lập câu trả lời toàn hệ thống.
+\end{itemize}
+
+\textbf{[TODO: Điền hướng cuối cùng của nhóm (Classical/Statistical NLP hoặc LLM/RAG), thành viên, phân công và các phần bổ sung do nhóm đã hoàn thành.]}
+
+\section{Bố cục báo cáo}
+
+Chương 2 giới thiệu kiến thức nền được áp dụng; Chương 3 phân tích bài toán và lựa chọn thiết kế; Chương 4 hướng dẫn triển khai và chạy thử; Chương 5 đánh giá kết quả, nêu giới hạn và các phần cần nhóm bổ sung; Chương 6 liệt kê tài liệu tham khảo.

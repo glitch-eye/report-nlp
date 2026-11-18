@@ -1,0 +1,62 @@
+\chapter{Phân tích bài toán và thiết kế}
+
+\section{Miền bài toán và nguồn tri thức}
+
+Course Assistant trả lời câu hỏi trong miền thông tin của môn CO3085, ví dụ thông tin chung, lịch học, chủ đề, bài tập, quy định và tài liệu. Bộ dữ liệu mẫu bao gồm các tệp:
+\begin{itemize}
+  \item \texttt{course\_info.txt}: thông tin chung và mục tiêu môn học;
+  \item \texttt{schedule.txt}, \texttt{topics.txt}: kế hoạch tuần và nội dung chương;
+  \item \texttt{assignments.txt}, \texttt{regulations.txt}: bài tập và quy định;
+  \item \texttt{resources.txt}, \texttt{faq.txt}: tài liệu tham khảo và hỏi đáp thường gặp;
+  \item \texttt{entities.txt}: alias và thực thể chuẩn;
+  \item \texttt{sample\_queries.txt}: câu truy vấn mẫu.
+\end{itemize}
+
+Theo ghi chú nguồn của bộ dữ liệu, nội dung kiến thức dựa trên đề cương CO3085 nhưng một số kế hoạch tuần, deadline/mốc bài tập, câu hỏi và quy định là dữ liệu mẫu. Do đó, hệ thống chỉ được khẳng định thông tin thực sự hiện diện trong nguồn; các câu hỏi ngoài miền hoặc thiếu dữ kiện cần được nhận diện riêng \cite{sample-data}.
+
+\section{Phân tích theo các phần trong đề bài}
+
+\subsection{Phần I: Văn phạm, sinh câu và parser}
+
+Grammar hiện có mô tả các dạng câu hỏi và yêu cầu trong miền Course Assistant. Phần việc được trình bày chi tiết ở báo cáo này là sinh câu từ grammar (Phần I.2). Parser là thành phần liên quan trong pipeline nhưng không phải nội dung triển khai cá nhân được khẳng định ở đây.
+
+\textbf{[TODO: Mô tả grammar/parser của nhóm, input/output và bằng chứng chạy Phần I.1/Phần I.3 nếu đã hoàn thành.]}
+
+\subsection{Phần II: Diễn giải ngữ nghĩa và lựa chọn phương pháp}
+
+Đề bài yêu cầu lựa chọn Classical/Statistical NLP hoặc mở rộng bằng LLM/RAG. Phần retrieval được thực hiện theo kế hoạch LLM/RAG, ở vai trò chuẩn bị nguồn tri thức, chunking và truy xuất context. Đây chưa phải mô tả rằng pipeline LLM/RAG end-to-end đã hoàn thành.
+
+Các bước retrieval có thể mô tả như sau:
+\[
+\text{query}
+\rightarrow \text{semantic hint (nếu có)}
+\rightarrow \text{query expansion}
+\rightarrow \text{TF-IDF + semantic ranking}
+\rightarrow \text{top-}k\text{ chunks / no context}.
+\]
+
+\textbf{[TODO: Ghi rõ lựa chọn cuối cùng của nhóm và mô tả các bước semantic, intent/entity, query construction, answer/LLM đã được tích hợp.]}
+
+\subsection{Phần III: Ngữ cảnh hội thoại}
+
+\textbf{[TODO: Điền nếu nhóm triển khai: loại tham chiếu hội thoại, state được lưu, cách giải tham chiếu trước retrieval và các ca cần hỏi lại.]}
+
+\subsection{Phần IV: Đánh giá}
+
+Đánh giá cần tách theo tầng. Với retrieval, có thể đo Hit@k/MRR trên các query có chunk kỳ vọng, và rejection rate trên query ngoài miền. Với answer generation, cần đánh giá độ đúng, groundedness, xử lý thiếu dữ liệu và citation; metric retrieval không thay thế các phép đo này. Bộ synthetic hiện có chỉ là phép kiểm tra tham chiếu, không phải tập test độc lập \cite{part1-retrieval}.
+
+\section{Quyết định thiết kế}
+
+\begin{longtable}{p{0.25\textwidth}p{0.34\textwidth}p{0.32\textwidth}}
+\toprule
+Quyết định & Lựa chọn hiện tại & Lý do / đánh đổi \\
+\midrule
+Chunking & Theo tuần, chương, FAQ, phần và mục dữ liệu & Giữ ranh giới nội dung có nghĩa và trace nguồn; chưa áp dụng chia theo kích thước/overlap. \\
+Biểu diễn retrieval & TF-IDF cosine & Baseline nhẹ, giải thích được và phù hợp để truy xuất bộ dữ liệu nhỏ. \\
+Semantic hint & Intent/entity khi parse được & Bổ sung tín hiệu miền; câu không parse được vẫn có thể dựa trên lexical retrieval. \\
+Top-k/ngưỡng & $k=3$, min score $0.08$ & Cấu hình trong code hiện tại; chưa được hiệu chỉnh trên bộ query viết tay độc lập. \\
+No-context & Không trả chunk nếu không vượt điều kiện lọc & Giảm việc chuyển context không liên quan sang tầng answer. \\
+\bottomrule
+\end{longtable}
+
+\textbf{[TODO: Nếu nhóm đã thay đổi cấu hình hoặc lựa chọn, cập nhật bảng theo phiên bản code và nêu bằng chứng.]}
