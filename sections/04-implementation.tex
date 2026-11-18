@@ -2,7 +2,7 @@
 
 \section{Cấu trúc triển khai}
 
-Các thành phần thuộc phạm vi báo cáo nằm trong \texttt{sample-code-v1.0/python/nlp/app/}:
+Các thành phần thuộc phạm vi báo cáo nằm trong \texttt{python/nlp/app/}:
 \begin{longtable}{p{0.32\textwidth}p{0.58\textwidth}}
 \toprule
 Module & Vai trò \\
@@ -21,10 +21,10 @@ Module & Vai trò \\
 
 \section{Môi trường}
 
-Đã chạy các lệnh bên dưới với virtual environment hiện có tại \texttt{sample-code-v1.0/python/.venv} (Python 3.13.3). Các lệnh phải được chạy từ thư mục \texttt{sample-code-v1.0/python/}.
+Đã chạy các lệnh bên dưới với virtual environment hiện có tại \texttt{python/.venv} (Python 3.13.3). Các lệnh phải được chạy từ thư mục \texttt{python/}.
 
 \begin{lstlisting}[language=bash]
-cd sample-code-v1.0/python
+cd repository root python
 \end{lstlisting}
 
 Nếu cần tái tạo môi trường, cài thư viện theo manifest:
@@ -76,7 +76,7 @@ Tùy chọn \texttt{--no-bypass-unknown} bảo đảm câu có nhãn \texttt{UNK
 
 \begin{lstlisting}[language=bash]
 .venv/bin/python -m nlp.app.run_retrieval \
-  --labeled-jsonl nlp/app/output/samples_labeled.jsonl \
+  --labeled-jsonl nlp/app/output/samples_reviewed.jsonl \
   --no-bypass-unknown \
   --output nlp/app/output/retrieval_samples.txt \
   --evaluation-output nlp/app/output/retrieval_evaluation.json
@@ -97,4 +97,4 @@ Kết quả đánh giá JSON & \texttt{nlp/app/output/retrieval\_evaluation.json
 \bottomrule
 \end{longtable}
 
-\textbf{[TODO: Bổ sung lệnh chạy parser, semantic/assistant, LLM, dialogue và Docker sau khi xác nhận trạng thái của nhóm. Chỉ ghi những lệnh đã chạy thành công.]}
+\textbf{[TODO: Bổ sung lệnh chạy parser, semantic/assistant, LLM, dialogue và Docker sau khi xác nhận trạng thái của nhóm. Các lệnh là hướng dẫn tái lập; cần chạy lại trên commit cuối và lưu log trước khi khẳng định test pass.]}
