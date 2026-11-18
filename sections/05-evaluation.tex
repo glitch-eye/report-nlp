@@ -2,7 +2,7 @@
 
 \section{Bằng chứng đã có cho phần retrieval}
 
-Phép chạy tái lập hiện có dùng \texttt{samples\_labeled.jsonl}: 1.497 query synthetic. Kết quả được chạy bằng virtual environment của dự án với \texttt{--no-bypass-unknown}:
+Phép chạy tái lập hiện có dùng \texttt{samples\_labeled.jsonl}: 300 reviewed samples (samples_reviewed.jsonl). Kết quả được chạy bằng virtual environment của dự án với \texttt{--no-bypass-unknown}:
 
 \begin{center}
 \begin{tabular}{lr}
@@ -10,9 +10,9 @@ Phép chạy tái lập hiện có dùng \texttt{samples\_labeled.jsonl}: 1.497 
 Chỉ số & Kết quả \\
 \midrule
 Số mẫu reviewed & 300 \\
-Hit@3 trên mẫu có context kỳ vọng & 1.439/1.440 (99,9\%) \\
-UNKNOWN bị từ chối & 3/3 (100\%) \\
-INSUFFICIENT\_CONTEXT có retrieval liên quan & 54/54 \\
+Parser accuracy / exact tree match & 300/300 (100\%) / 300/300 (100\%) \\
+Semantic intent accuracy & 300/300 (100\%); entity F1 micro 100\% (89 TP) \\
+INSUFFICIENT\_CONTEXT có retrieval liên quan & 13/14 \\
 \bottomrule
 \end{tabular}
 \end{center}
