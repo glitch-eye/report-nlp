@@ -1,0 +1,32 @@
+\section{Cơ sở lý thuyết}
+\subsection{Mô hình bảo mật Zero Trust (ZTA)}
+Dự án được xây dựng trên nền tảng kiến trúc Zero Trust theo tiêu chuẩn NIST SP 800-207, kết hợp sức mạnh của hệ sinh thái Cloudflare Zero Trust và giải pháp định danh Keycloak để bảo vệ tài nguyên ứng dụng.
+
+\begin{itemize}
+\item \textbf{Nguyên tắc "Never Trust, Always Verify"}: Loại bỏ khái niệm tin cậy dựa trên vị trí mạng (Network Location). Mọi yêu cầu truy cập vào ứng dụng chạy trên Cloudflare Workers đều bắt buộc phải vượt qua bước xác thực danh tính và kiểm tra điều kiện chính sách liên tục tại tầng biên (Edge).
+
+\item \textbf{Quyền truy cập tối thiểu (Least Privilege)}: Thực thi mô hình kiểm soát truy cập dựa trên thuộc tính (Attribute-Based Access Control - ABAC). Thông qua các chính sách tại Cloudflare Access, hệ thống chỉ cấp quyền thực thi mã nguồn cho người dùng sở hữu các định danh (Claims) hợp lệ được trích xuất trực tiếp từ Keycloak.
+
+\item \textbf{Tách biệt các thành phần điều khiển và thực thi}: Kiến trúc phân định rõ ràng vai trò giữa bộ phận quản lý chính sách (Policy Decision Point - Cloudflare Dashboard) và bộ phận thực thi chính sách (Policy Enforcement Point - Cloudflare Edge). Việc triển khai trực tiếp mã nguồn trên Worker giúp thu hẹp tối đa bề mặt tấn công (Attack Surface), do ứng dụng không sở hữu địa chỉ IP công khai và chỉ được kích hoạt sau khi đã xác thực thành công.
+\end{itemize}
+
+\subsection{Giao thức xác thực và Quản trị danh tính}
+Hệ thống sử dụng giải pháp quản trị danh tính tập trung Keycloak (Identity Provider - IdP), được tích hợp vào hệ sinh thái Cloudflare Zero Trust nhằm thiết lập một cơ chế xác thực nhất quán và bảo mật.
+
+\begin{itemize}
+\item \textbf{Xác thực qua OpenID Connect (OIDC)}: Dự án sử dụng OIDC như một lớp xác thực trên nền giao thức OAuth 2.0. Keycloak đóng vai trò là bên cung cấp định danh, cho phép Cloudflare ủy quyền và tiếp nhận thông tin người dùng thông qua các luồng trao đổi Token (Token Exchange) an toàn trước khi kích hoạt logic ứng dụng.
+
+\item \textbf{Định danh qua JSON Web Token (JWT)}: Sau khi xác thực thành công, Cloudflare đóng gói các thông tin định danh (như Email, Roles, Groups) vào một mã thông báo JWT được ký số. JWT này được đính kèm vào Header \texttt{Cf-Access-Jwt-Assertion}, đóng vai trò là bằng chứng định danh không thể giả mạo khi truyền tải dữ liệu giữa lớp IAP và Cloudflare Workers.
+
+\item \textbf{Cơ chế ánh xạ thuộc tính (Claim Mapping)}: Hệ thống thực hiện ánh xạ các thuộc tính tùy chỉnh từ cơ sở dữ liệu của Keycloak (như phòng ban, cấp bậc) vào các OIDC Claims. Các thông tin này sau đó được Cloudflare bóc tách thành các Header định danh riêng biệt, giúp mã nguồn ứng dụng tại Edge có thể thực hiện phân quyền động (Dynamic Authorization) một cách tức thời mà không cần truy vấn lại cơ sở dữ liệu gốc.
+\end{itemize}
+
+\subsection{Identity-Aware Proxy (IAP) với Cloudflare}
+Kỹ thuật triển khai IAP thông qua Cloudflare Access và Cloudflare Tunnel đóng vai trò là chốt chặn bảo mật, thực hiện kiểm tra quyền truy cập trước khi yêu cầu chạm tới tài nguyên nội bộ.
+\begin{itemize}
+    \item \textbf{Kiến trúc Serverless Edge}: Thay vì sử dụng máy chủ vật lý, mã nguồn ứng dụng được triển khai và thực thi trực tiếp trên hạ tầng phân tán toàn cầu của Cloudflare. Điều này giúp loại bỏ hoàn toàn các rủi ro liên quan đến việc quản lý hạ tầng (Serverless), ẩn đi sự tồn tại của máy chủ gốc và ngăn chặn các cuộc tấn công nhắm vào địa chỉ IP.
+
+    \item \textbf{Kiểm soát truy cập dựa trên danh tính (Identity-Aware Access)}: Tận dụng lớp IAP (Identity-Aware Proxy) của Cloudflare để đánh giá mọi yêu cầu truy cập ngay tại biên mạng. Quyết định cho phép hoặc từ chối được đưa ra tức thời dựa trên các tiêu chí như: xác thực người dùng từ Keycloak, thông tin thiết bị, vị trí địa lý và các chính sách bảo mật tùy chỉnh.
+
+    \item \textbf{Tích hợp danh tính qua Header (Identity Propagation)}: Cơ chế bóc tách các định danh người dùng (Claims) như Email, Groups, Roles từ Cloudflare Access và truyền trực tiếp vào lòng mã nguồn Worker dưới dạng các HTTP Header. Ứng dụng thực hiện phân quyền nội bộ dựa trên các thông tin này, đảm bảo tính toàn vẹn của danh tính mà không cần thiết lập các đường ống kết nối phức tạp.
+\end{itemize}

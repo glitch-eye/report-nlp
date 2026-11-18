@@ -1,0 +1,30 @@
+
+\section{GIỚI THIỆU}
+
+\subsection{Lý do chọn bài toán}
+Sự thay đổi về hạ tầng công nghệ thông tin và phương thức làm việc hiện đại đã đặt ra những thách thức mới cho bảo mật truyền thống:
+\begin{itemize}
+\item \textbf{Sự lỗi thời của mô hình vành đai}: Mô hình "Trust/Untrust" truyền thống dựa trên địa chỉ IP nội bộ không còn hiệu quả trước các cuộc tấn công có mục tiêu (APT) và rủi ro từ việc "di chuyển ngang" (Lateral Movement) của kẻ tấn công trong mạng nội bộ.
+\item \textbf{Sự bùng nổ của làm việc từ xa (Remote Work)}: Nhu cầu truy cập tài nguyên doanh nghiệp từ mọi nơi và sự phổ biến của các thiết bị cá nhân (BYOD) làm lu mờ ranh giới của mạng an toàn.
+\item \textbf{Tối ưu hóa tài nguyên đám mây}: Việc chuyển dịch ứng dụng lên các nền tảng Serverless yêu cầu một phương thức bảo mật mới, linh hoạt hơn nhưng vẫn đảm bảo tính cô lập và bảo vệ vùng dữ liệu nhạy cảm.
+\end{itemize}
+
+\subsection{Mục tiêu và Yêu cầu của dự án}
+Dự án được thiết kế nhằm đáp ứng các yêu cầu kỹ thuật và thực tiễn của mô hình bảo mật hiện đại:
+\begin{itemize}
+\item \textbf{Nghiên cứu kiến trúc ZTA}: Phân tích và áp dụng tiêu chuẩn NIST SP 800-207 vào thực tế triển khai ứng dụng biên.
+\item \textbf{Triển khai Identity-Aware Proxy (IAP)}: Xây dựng hệ thống kiểm soát truy cập dựa trên danh tính, đảm bảo mọi request đều phải được xác thực trước khi chạm tới mã nguồn.
+\item \textbf{Tích hợp quản trị danh tính (Keycloak)}: Sử dụng giải pháp mã nguồn mở Keycloak để thực hiện xác thực tập trung, hỗ trợ các giao thức mạnh mẽ như OIDC và cơ chế bảo mật đa lớp (MFA).
+\item \textbf{Tối ưu hóa Edge Computing}: Chạy trực tiếp mã nguồn trên Cloudflare Workers để loại bỏ hoàn toàn bề mặt tấn công của máy chủ truyền thống (Zero Attack Surface).
+\item \textbf{Đánh giá hiệu năng}: Đảm bảo hệ thống đạt được sự cân bằng giữa tính bảo mật nghiêm ngặt và trải nghiệm người dùng (độ trễ thấp).
+\end{itemize}
+\newpage
+\subsection{Nội dung các chương tiếp theo}
+Báo cáo được cấu trúc thành các chương chính như sau:
+\begin{itemize}
+\item \textbf{Chương 2: Cơ sở lý thuyết}: Trình bày các khái niệm về Zero Trust Architecture (ZTA), mô hình IAP, các giao thức xác thực hiện đại (OIDC, JWT) và công nghệ điện toán biên (Serverless Edge).
+\item \textbf{Chương 3: Phân tích và Thiết kế hệ thống}: Phân tích nhu cầu thực tế, thiết kế luồng dữ liệu (Data Flow), kiến trúc logic của hệ thống và giải pháp tích hợp giữa Cloudflare Workers và Keycloak.
+\item \textbf{Chương 4: Triển khai và Đánh giá}: Mô tả quá trình hiện thực hóa giải pháp, cấu hình thực tế và thực hiện các kịch bản kiểm thử để đánh giá khả năng bảo mật cũng như hiệu năng hệ thống.
+\item \textbf{Chương 5: Kết luận và Hướng phát triển}: Tổng kết các kết quả đã đạt được, nhìn nhận các hạn chế còn tồn tại và đề xuất hướng mở rộng trong tương lai.
+\item \textbf{Tài liệu tham khảo \& Phụ lục}: Liệt kê các nguồn tài liệu và thông tin về môi trường phát triển ứng dụng.
+\end{itemize}

@@ -1,0 +1,54 @@
+\documentclass[12pt,a4paper]{article}
+
+% ===== Các gói cần thiết cho tiếng Việt, toán, ảnh, bìa và header cũ =====
+\usepackage[T5]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\geometry{a4paper,margin=2.5cm}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+\usepackage{lastpage}
+\usepackage[section]{placeins}
+\usepackage{listings}
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    breaklines=true
+}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+
+% Gọi lại bìa và header theo cấu trúc dự án cũ
+\input{bia+header/bia}
+\input{bia+header/h_and_d}
+
+\pagenumbering{roman}
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+
+\pagenumbering{arabic}
+\hypersetup{pageanchor=true}
+
+\include{contents/1 Intro.tex}
+\include{contents/2 Overview.tex}
+\include{contents/3 Baitoan1.tex}
+\include{contents/4 Baitoan2.tex}
+\include{contents/tongket.tex}
+
+
+
+\end{document}

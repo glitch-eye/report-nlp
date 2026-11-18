@@ -1,0 +1,104 @@
+
+\section{KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN}
+
+\subsection{Kết quả đạt được}
+Dự án đã hoàn thành các mục tiêu đặt ra trong việc xây dựng hệ thống bảo mật theo mô hình Zero Trust, cụ thể:
+\begin{itemize}
+\item \textbf{Về kiến trúc}: Hiện thực hóa nguyên lý "Never Trust, Always Verify" thông qua lớp Identity-Aware Proxy (IAP). Chuyển đổi thành công sang mô hình \textbf{Serverless Edge}, loại bỏ rủi ro lộ IP máy chủ gốc.
+\item \textbf{Về công nghệ}: Tích hợp hoàn chỉnh giao thức OIDC giữa Keycloak và Cloudflare. Triển khai thành công cơ chế \textbf{Identity Propagation}, chuyển hóa Claims từ IdP thành các Header định danh giúp ứng dụng biên nhận biết người dùng tức thời.
+\item \textbf{Về bảo mật}: Thiết lập thành công cơ chế phân quyền động (Dynamic Authorization) tại tầng biên, đảm bảo tài nguyên chỉ được thực thi sau khi vượt qua các kiểm tra nghiêm ngặt về danh tính và ngữ cảnh.
+\end{itemize}
+
+\subsection{Hạn chế của hệ thống}
+Mặc dù đạt được các mục tiêu chính, hệ thống vẫn tồn tại một số hạn chế:
+\begin{itemize}
+\item \textbf{Phụ thuộc hạ tầng trung gian}: Hệ thống phụ thuộc lớn vào tính sẵn sàng của Cloudflare. Nếu có sự cố tại các Node của Cloudflare, việc truy cập ứng dụng có thể bị gián đoạn.
+\item \textbf{Giới hạn của môi trường Runtime}: Cloudflare Workers có giới hạn về dung lượng bộ nhớ và thời gian thực thi (CPU time), gây khó khăn nếu ứng dụng cần xử lý các tác vụ tính toán nặng.
+\end{itemize}
+
+\subsection{Ưu điểm và Nhược điểm}
+\begin{table}[H]
+\centering
+\caption{Đánh giá ưu và nhược điểm của giải pháp}
+\begin{tabular}{|p{7cm}|p{7cm}|}
+\hline
+\textbf{Ưu điểm} & \textbf{Nhược điểm} \\ \hline
+Tối ưu hiệu năng nhờ xử lý tại Edge (QUIC, HTTP/3). & Đòi hỏi kiến thức chuyên sâu về Serverless và quản trị IdP. \\ \hline
+Bề mặt tấn công cực nhỏ (Zero Attack Surface) do không có IP công khai. & Khó khăn trong việc Debug và theo dõi Logs chi tiết hơn so với Server truyền thống. \\ \hline
+Chi phí vận hành thấp, khả năng tự động mở rộng (Auto-scaling) linh hoạt. & Phụ thuộc vào chính sách giá và giới hạn của nhà cung cấp Cloud. \\ \hline
+\end{tabular}
+\end{table}
+\newpage
+\subsection{Hướng phát triển tương lai}
+Để hoàn thiện hệ thống, các hướng nghiên cứu tiếp theo bao gồm:
+\begin{itemize}
+\item \textbf{Tăng cường Context-aware}: Tích hợp thêm các tín hiệu về trạng thái thiết bị (Device Posture) và hành vi người dùng để đưa ra quyết định truy cập chính xác hơn.
+\item \textbf{Mở rộng lưu trữ tại biên}: Sử dụng Cloudflare D1 (SQL) hoặc Workers KV để xây dựng các ứng dụng Full-stack hoàn chỉnh chạy hoàn toàn trên mô hình Zero Trust Edge.
+\item \textbf{Tự động hóa chính sách}: Nghiên cứu áp dụng Infrastructure as Code (Terraform) để quản lý đồng bộ các Access Policies và Keycloak Clients.
+\end{itemize}
+
+\newpage
+\begin{thebibliography}{99}
+
+\bibitem{nist} 
+S. Rose, O. Borchert, S. Mitchell, and S. Connelly, ``Zero Trust Architecture,'' \textit{NIST Special Publication 800-207}, Aug. 2020. [Online]. Available: https://doi.org/10.6028/NIST.SP.800-207
+
+\bibitem{oidc} 
+N. Sakimura et al., ``OpenID Connect Core 1.0 incorporating errata set 1,'' \textit{The OpenID Foundation}, Nov. 2014.
+
+\bibitem{cloudflare_zta} 
+Cloudflare, ``What is a Zero Trust Architecture?'' \textit{Cloudflare Learning Center}. [Online]. Available: https://www.cloudflare.com/learning/security/glossary/what-is-zero-trust/
+
+\bibitem{keycloak_auth} 
+Red Hat, ``Keycloak Server Administration Guide,'' \textit{Keycloak.org}. [Online]. Available: https://www.keycloak.org/docs/latest/server\_admin/
+
+\bibitem{workers_docs} 
+Cloudflare, ``Cloudflare Workers documentation,'' \textit{Cloudflare Developers}. [Online]. Available: https://developers.cloudflare.com/workers/
+
+\end{thebibliography}
+\newpage
+\section*{PHỤ LỤC: TÀI LIỆU VÀ MÔI TRƯỜNG PHÁT TRIỂN}
+
+\subsection*{1. Tài liệu tham khảo}
+
+\begin{itemize}
+\item \textbf{NIST Special Publication 800-207}: Tài liệu tiêu chuẩn quốc gia định nghĩa kiến trúc Zero Trust (ZTA) và các thành phần cốt lõi.
+\item \textbf{Cloudflare Zero Trust Documentation}: Hướng dẫn kỹ thuật triển khai Identity-Aware Proxy (IAP), cấu hình OIDC Identity Provider và Access Policies.
+\item \textbf{Keycloak Server Administration Guide}: Tài liệu quản trị Keycloak, bao gồm cấu hình Client OIDC và Protocol Mappers để tùy chỉnh claims trong token.
+\item \textbf{OpenID Connect Core 1.0}: Đặc tả chính thức của giao thức OIDC.
+\item \textbf{RFC 7519 -- JSON Web Token (JWT)}: Tiêu chuẩn kỹ thuật về cấu trúc và cơ chế bảo mật của JSON Web Token.
+\end{itemize}
+
+\subsection*{2. Môi trường phát triển}
+
+\begin{itemize}
+\item \textbf{Nền tảng thực thi}: Cloudflare Workers (Serverless) trên môi trường V8 JavaScript.
+\item \textbf{Hệ điều hành}: Windows 11 / macOS (môi trường phát triển); Docker cho việc triển khai Keycloak trong giai đoạn thử nghiệm.
+\item \textbf{Công cụ phát triển}:
+  \begin{itemize}
+  \item Visual Studio Code với các extension hỗ trợ JavaScript/TypeScript và Cloudflare Workers.
+  \item \texttt{Wrangler CLI} (công cụ chính thức của Cloudflare) dùng để phát triển, preview và triển khai.
+  \end{itemize}
+\item \textbf{Công cụ kiểm thử}: Postman (kiểm tra luồng xác thực, redirect và cấu trúc header/token).
+\end{itemize}
+
+\subsection*{3. Thư viện và công nghệ mã nguồn mở}
+
+\begin{itemize}
+\item \textbf{Keycloak}: Giải pháp IAM mã nguồn mở, hỗ trợ đầy đủ OIDC, OAuth 2.0 và SAML.
+\item \textbf{Cloudflare Wrangler}: Bộ công cụ phát triển và triển khai Cloudflare Workers.
+\item \textbf{Web APIs tiêu chuẩn} (được hỗ trợ natively trong Cloudflare Workers):
+  \begin{itemize}
+  \item \texttt{Fetch API} -- Xử lý HTTP requests.
+  \item \texttt{Headers Interface} -- Trích xuất thông tin từ \texttt{Cf-Access-Jwt-Assertion}.
+  \item \texttt{Web Crypto API} -- Kiểm tra chữ ký và xử lý token (nếu cần).
+  \end{itemize}
+\end{itemize}
+
+\subsection*{4. Mã nguồn tham khảo}
+
+\begin{itemize}
+\item Cloudflare Access Headers samples (xử lý JWT từ header \texttt{Cf-Access-Jwt-Assertion}).
+\item Keycloak Custom Protocol Mapper examples (thêm Group/Role vào ID Token).
+\item Các ví dụ triển khai Zero Trust với OIDC trên Cloudflare Workers từ tài liệu chính thức và cộng đồng.
+\end{itemize}
