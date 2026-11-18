@@ -18,9 +18,9 @@ Theo ghi chú nguồn của bộ dữ liệu, nội dung kiến thức dựa tr�
 
 \subsection{Phần I: Văn phạm, sinh câu và parser}
 
-Grammar hiện có mô tả các dạng câu hỏi và yêu cầu trong miền Course Assistant. Phần việc được trình bày chi tiết ở báo cáo này là sinh câu từ grammar (Phần I.2). Parser là thành phần liên quan trong pipeline nhưng không phải nội dung triển khai cá nhân được khẳng định ở đây.
+Grammar hiện có mô tả các dạng câu hỏi và yêu cầu trong miền Course Assistant. Phần việc được trình bày chi tiết ở báo cáo này là sinh câu từ grammar (Phần I.2). Parser hiện được triển khai bằng Earley chart parser; API multi-intent bổ sung phân đoạn clause có kiểm chứng mà vẫn giữ parse single-intent.
 
-\textbf{[TODO: Mô tả grammar/parser của nhóm, input/output và bằng chứng chạy Phần I.1/Phần I.3 nếu đã hoàn thành.]}
+Grammar được lưu trong output/grammar.txt. Parser nhận câu hỏi, trả ParseNode/bracketed tree hoặc None. parse_multi chỉ trả S_MULTI khi các clause đều parse thành công. Cần lưu ý bộ test multi-intent hiện chưa có tập reviewed riêng để đo accuracy.
 
 \subsection{Phần II: Diễn giải ngữ nghĩa và lựa chọn phương pháp}
 
@@ -35,11 +35,11 @@ Các bước retrieval có thể mô tả như sau:
 \rightarrow \text{top-}k\text{ chunks / no context}.
 \]
 
-\textbf{[TODO: Ghi rõ lựa chọn cuối cùng của nhóm và mô tả các bước semantic, intent/entity, query construction, answer/LLM đã được tích hợp.]}
+Code snapshot triển khai semantic frame, intent/entity, query expansion, TF-IDF retrieval, mock/API LLM adapter, prompt builder và Answer Guard. Mock là mặc định phục vụ chạy offline; không dùng kết quả mock để kết luận chất lượng LLM thật.
 
 \subsection{Phần III: Ngữ cảnh hội thoại}
 
-\textbf{[TODO: Điền nếu nhóm triển khai: loại tham chiếu hội thoại, state được lưu, cách giải tham chiếu trước retrieval và các ca cần hỏi lại.]}
+DialogueState lưu câu hỏi gần nhất, intent, entities, answer entities và sources. DialogueManager xử lý các tham chiếu cục bộ như chương này, tuần này, phần này và chương sau theo pattern định nghĩa trước. Đây chưa phải bộ giải đồng tham chiếu tổng quát.
 
 \subsection{Phần IV: Đánh giá}
 
