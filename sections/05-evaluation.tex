@@ -2,7 +2,7 @@
 
 \section{Kết quả đánh giá theo từng tầng}
 
-Phép chạy tái lập hiện có dùng \texttt{samples\_labeled.jsonl}: 300 reviewed samples (samples_reviewed.jsonl). Kết quả được chạy bằng virtual environment của dự án với \texttt{--no-bypass-unknown}:
+Phép chạy tái lập hiện có dùng \texttt{samples\_labeled.jsonl}: 300 reviewed samples (\texttt{samples\_labeled.jsonl}). Kết quả được chạy bằng virtual environment của dự án với \texttt{--no-bypass-unknown}:
 
 \begin{center}
 \begin{tabular}{lr}
@@ -14,16 +14,16 @@ Parser accuracy / exact tree match & 300/300 (100\%) / 300/300 (100\%) \\
 Semantic intent accuracy & 300/300 (100\%); entity F1 micro 100\% (89 TP) \\
 Retrieval Hit@3 độc lập & 241/283 (85,2\%) \\
 Refusal accuracy end-to-end & 4/17 (23,5\%) \\
-Over-answering trên INSUFFICIENT_CONTEXT & 13/14 \\
+Over-answering trên \texttt{INSUFFICIENT\_CONTEXT} & 13/14 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Dataset này là tập 300 mẫu đã rà soát, nhưng không chứa mẫu MULTI_INTENT; vì vậy không thể dùng các metric này để khẳng định độ chính xác multi-intent. Parser và semantic đạt 100% trên tập con này, không chứng minh khả năng tổng quát ngoài tập. Retrieval Hit@3 độc lập là 241/283 (85,2%), không phải 99,9%. Trong phép end-to-end, retrieval hit count khác (264/283; 93,3%) do đây là pipeline/metric riêng, không nên gộp hai con số.
+Dataset này là tập 300 mẫu đã rà soát, nhưng không chứa mẫu \texttt{MULTI\_INTENT}; vì vậy không thể dùng các metric này để khẳng định độ chính xác multi-intent. Parser và semantic đạt 100% trên tập con này, không chứng minh khả năng tổng quát ngoài tập. Retrieval Hit@3 độc lập là 241/283 (85,2%), không phải 99,9%. Trong phép end-to-end, retrieval hit count khác (264/283; 93,3%) do đây là pipeline/metric riêng, không nên gộp hai con số.
 
 \section{Đánh giá toàn hệ thống}
 
-Trong artifact, end-to-end có 296 ANSWERED; 296/296 citation hợp lệ theo kiểm tra của guard (100%). Tuy nhiên, refusal accuracy chỉ 4/17 (23,5%); 13 mẫu INSUFFICIENT_CONTEXT vẫn bị ANSWERED. Không có NEEDS_REVIEW trong artifact. LLM provider là mock, do đó không đo chất lượng của LLM thật.
+Trong artifact, end-to-end có 296 ANSWERED; 296/296 citation hợp lệ theo kiểm tra của guard (100%). Tuy nhiên, refusal accuracy chỉ 4/17 (23,5%); 13 mẫu \texttt{INSUFFICIENT\_CONTEXT} vẫn bị ANSWERED. Không có \texttt{NEEDS\_REVIEW} trong artifact. LLM provider là mock, do đó không đo chất lượng của LLM thật.
 
 \section{Phân tích lỗi và hạn chế}
 
