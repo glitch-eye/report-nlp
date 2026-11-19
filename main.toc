@@ -29,28 +29,28 @@
 \contentsline {section}{\numberline {3.1}Phân tích bài toán và dữ liệu đầu vào}{12}{section.3.1}%
 \contentsline {subsection}{\numberline {3.1.1}Bài toán cần giải quyết}{12}{subsection.3.1.1}%
 \contentsline {subsection}{\numberline {3.1.2}Dữ liệu nguồn và cách chia nhỏ (Chunking)}{12}{subsection.3.1.2}%
-\contentsline {paragraph}{Các khoảng trống dữ liệu đã xác định trước:}{13}{section*.5}%
+\contentsline {paragraph}{Các khoảng trống dữ liệu đã xác định trước:}{13}{section*.4}%
 \contentsline {section}{\numberline {3.2}Kiến trúc tổng thể 6 tầng}{13}{section.3.2}%
 \contentsline {section}{\numberline {3.3}Thiết kế chi tiết từng thành phần}{15}{section.3.3}%
 \contentsline {subsection}{\numberline {3.3.1}Phần I: Văn phạm, sinh câu, Earley Parser và tách đa ý định}{15}{subsection.3.3.1}%
-\contentsline {paragraph}{1. Văn phạm ngữ nghĩa (\texttt {output/grammar.txt}, \texttt {course\_grammar.py}):}{15}{section*.7}%
-\contentsline {paragraph}{2. Sinh câu mẫu theo chiều rộng (\texttt {sentence\_generator.py}):}{15}{section*.8}%
-\contentsline {paragraph}{3. Phân tích cú pháp bằng Earley Parser (\texttt {parser.py}):}{15}{section*.9}%
-\contentsline {paragraph}{4. Tách câu ghép đa ý định (\texttt {multi\_intent.py}):}{16}{section*.10}%
+\contentsline {paragraph}{1. Văn phạm ngữ nghĩa (\texttt {output/grammar.txt}, \texttt {course\_grammar.py}):}{15}{section*.6}%
+\contentsline {paragraph}{2. Sinh câu mẫu theo chiều rộng (\texttt {sentence\_generator.py}):}{15}{section*.7}%
+\contentsline {paragraph}{3. Phân tích cú pháp bằng Earley Parser (\texttt {parser.py}):}{15}{section*.8}%
+\contentsline {paragraph}{4. Tách câu ghép đa ý định (\texttt {multi\_intent.py}):}{16}{section*.9}%
 \contentsline {subsection}{\numberline {3.3.2}Phần II: Khung ngữ nghĩa, truy xuất lai và mở rộng LLM/RAG}{16}{subsection.3.3.2}%
-\contentsline {paragraph}{1. Biểu diễn ngữ nghĩa \texttt {SemanticFrame} (\texttt {semantic.py}, \texttt {semantic\_frame.py}):}{16}{section*.11}%
-\contentsline {paragraph}{2. Truy xuất tri thức lai (\texttt {retriever.py}):}{16}{section*.12}%
-\contentsline {paragraph}{3. Mô hình LLM, đóng gói Prompt và Answer Guard 3 lớp:}{17}{section*.13}%
+\contentsline {paragraph}{1. Biểu diễn ngữ nghĩa \texttt {SemanticFrame} (\texttt {semantic.py}, \texttt {semantic\_frame.py}):}{16}{section*.10}%
+\contentsline {paragraph}{2. Truy xuất tri thức lai (\texttt {retriever.py}):}{16}{section*.11}%
+\contentsline {paragraph}{3. Mô hình LLM, đóng gói Prompt và Answer Guard 3 lớp:}{17}{section*.12}%
 \contentsline {subsection}{\numberline {3.3.3}Phần III: Xử lý ngữ cảnh hội thoại cục bộ}{17}{subsection.3.3.3}%
-\contentsline {paragraph}{Khi nào hệ thống hỏi lại (\texttt {NEED\_CLARIFICATION})?}{18}{section*.14}%
+\contentsline {paragraph}{Khi nào hệ thống hỏi lại (\texttt {NEED\_CLARIFICATION})?}{18}{section*.13}%
 \contentsline {subsection}{\numberline {3.3.4}Phần IV: Định hướng kiểm duyệt nhãn và đánh giá 4 tầng}{18}{subsection.3.3.4}%
 \contentsline {section}{\numberline {3.4}Tổng kết định hướng thiết kế}{19}{section.3.4}%
 \contentsline {chapter}{\numberline {4}Triển khai và chạy thử}{20}{chapter.4}%
 \contentsline {section}{\numberline {4.1}Môi trường và tổ chức mã nguồn}{20}{section.4.1}%
 \contentsline {section}{\numberline {4.2}Luồng xử lý một câu hỏi}{21}{section.4.2}%
 \contentsline {subsection}{\numberline {4.2.1}Baseline tuần tự của một lần xử lý}{22}{subsection.4.2.1}%
-\contentsline {paragraph}{Cài đặt Earley Parser.}{23}{section*.15}%
-\contentsline {paragraph}{Cài đặt tách câu đa ý định.}{23}{section*.16}%
+\contentsline {paragraph}{Cài đặt Earley Parser.}{23}{section*.14}%
+\contentsline {paragraph}{Cài đặt tách câu đa ý định.}{23}{section*.15}%
 \contentsline {paragraph}{Cập nhật trạng thái hội thoại.}{24}{lstlisting.4.-3}%
 \contentsline {subsection}{\numberline {4.2.2}Sơ đồ luồng xử lý toàn hệ thống}{25}{subsection.4.2.2}%
 \contentsline {subsection}{\numberline {4.2.3}Trình tự tương tác của một truy vấn}{25}{subsection.4.2.3}%

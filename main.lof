@@ -2,15 +2,15 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \setforeignlanguage {vietnamese}
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Kiến trúc tổng thể 6 tầng của hệ thống Course Assistant.\relax }}{14}{figure.caption.6}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Kiến trúc tổng thể 6 tầng của hệ thống Course Assistant.\relax }}{14}{figure.caption.5}%
 \addvspace {10\p@ }
 \setforeignlanguage {vietnamese}
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Luồng triển khai tuần tự của Course Assistant.\relax }}{25}{figure.caption.18}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Luồng triển khai tuần tự của Course Assistant.\relax }}{25}{figure.caption.17}%
 \setforeignlanguage {vietnamese}
-\contentsline {figure}{\numberline {4.2}{\ignorespaces Trình tự tương tác giữa các thành phần trong một lượt hỏi đáp.\relax }}{26}{figure.caption.19}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Trình tự tương tác giữa các thành phần trong một lượt hỏi đáp.\relax }}{26}{figure.caption.18}%
 \setforeignlanguage {vietnamese}
-\contentsline {figure}{\numberline {4.3}{\ignorespaces Luồng xử lý một câu hỏi đa ý định.\relax }}{27}{figure.caption.20}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Luồng xử lý một câu hỏi đa ý định.\relax }}{27}{figure.caption.19}%
 \setforeignlanguage {vietnamese}
-\contentsline {figure}{\numberline {4.4}{\ignorespaces Pipeline tổng hợp các loại đánh giá của hệ thống.\relax }}{31}{figure.caption.21}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Pipeline tổng hợp các loại đánh giá của hệ thống.\relax }}{31}{figure.caption.20}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }

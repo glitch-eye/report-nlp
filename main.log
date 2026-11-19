@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2023.9.12)  19 NOV 2026 22:36
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2023.9.12)  19 NOV 2026 22:41
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1108,31 +1108,7 @@ LaTeX Info: Redefining \ttfamily on input line 13.
  [4
 
 
-] (./main.lot
-LaTeX Info: Redefining \rmfamily on input line 4.
-LaTeX Info: Redefining \sffamily on input line 4.
-LaTeX Info: Redefining \ttfamily on input line 4.
-LaTeX Info: Redefining \rmfamily on input line 6.
-LaTeX Info: Redefining \sffamily on input line 6.
-LaTeX Info: Redefining \ttfamily on input line 6.
-LaTeX Info: Redefining \rmfamily on input line 7.
-LaTeX Info: Redefining \sffamily on input line 7.
-LaTeX Info: Redefining \ttfamily on input line 7.
-LaTeX Info: Redefining \rmfamily on input line 8.
-LaTeX Info: Redefining \sffamily on input line 8.
-LaTeX Info: Redefining \ttfamily on input line 8.
-LaTeX Info: Redefining \rmfamily on input line 9.
-LaTeX Info: Redefining \sffamily on input line 9.
-LaTeX Info: Redefining \ttfamily on input line 9.
-)
-\tf@lot=\write7
-\openout7 = `main.lot'.
-
- [5
-
-
-]
-(./sections/01-introduction.tex
+] (./sections/01-introduction.tex
 Chương 1.
 [1
 
@@ -1495,12 +1471,12 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 319865DA2BE85D0FF36A1FCE876C3B5D;14744.
  ) 
 Here is how much of TeX's memory you used:
- 29869 strings out of 476683
- 611585 string characters out of 5804047
+ 29863 strings out of 476683
+ 611529 string characters out of 5804047
  2100018 words of memory out of 5000000
- 49572 multiletter control sequences out of 15000+600000
+ 49569 multiletter control sequences out of 15000+600000
  521019 words of font info for 105 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  100i,10n,117p,820b,1245s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on main.pdf (41 pages).
+Output written on main.pdf (40 pages).
