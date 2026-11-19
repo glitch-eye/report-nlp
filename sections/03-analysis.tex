@@ -2,61 +2,72 @@
 
 \section{Miền bài toán và nguồn tri thức}
 
-Course Assistant trả lời câu hỏi trong miền thông tin của môn CO3085, ví dụ thông tin chung, lịch học, chủ đề, bài tập, quy định và tài liệu. Bộ dữ liệu mẫu bao gồm các tệp:
+\subsection{Phạm vi bài toán}
+
+Hệ thống \emph{Course Assistant} hỗ trợ sinh viên tra cứu thông tin môn học \emph{Xử lý ngôn ngữ tự nhiên (CO3085)} bằng tiếng Việt (có xen thuật ngữ tiếng Anh). Dựa trên yêu cầu đề bài \cite{assignment}, bài toán đặt ra bốn nhóm yêu cầu chính:
 \begin{itemize}
-  \item \texttt{course\_info.txt}: thông tin chung và mục tiêu môn học;
-  \item \texttt{schedule.txt}, \texttt{topics.txt}: kế hoạch tuần và nội dung chương;
-  \item \texttt{assignments.txt}, \texttt{regulations.txt}: bài tập và quy định;
-  \item \texttt{resources.txt}, \texttt{faq.txt}: tài liệu tham khảo và hỏi đáp thường gặp;
-  \item \texttt{entities.txt}: alias và thực thể chuẩn;
-  \item \texttt{sample\_queries.txt}: câu truy vấn mẫu.
+  \item \textbf{Hỏi đáp 6 chủ đề môn học:} Thông tin chung và thi cử, lịch học theo tuần, nội dung chương/chủ đề, bài tập lớn và hạn nộp, tài liệu tham khảo, quy định và chuẩn đầu ra (\texttt{L.O.}).
+  \item \textbf{Xử lý câu hỏi ghép nhiều ý:} Tách đúng các câu nối bằng \emph{``và''} khi mang nhiều ý định độc lập, nhưng không tách nhầm cụm thuật ngữ hoặc câu so sánh.
+  \item \textbf{Hỗ trợ hội thoại cục bộ:} Hiểu các câu hỏi nối tiếp dùng đại từ hoặc từ chỉ xuất dựa vào ngữ cảnh lượt liền trước.
+  \item \textbf{Trung thực dữ liệu:} Chỉ trả lời dựa trên tài liệu môn học được cung cấp; chủ động từ chối hoặc báo thiếu thông tin khi câu hỏi ngoài miền hoặc thiếu dữ kiện.
 \end{itemize}
 
-Theo ghi chú nguồn của bộ dữ liệu, nội dung kiến thức dựa trên đề cương CO3085 nhưng một số kế hoạch tuần, deadline/mốc bài tập, câu hỏi và quy định là dữ liệu mẫu. Do đó, hệ thống chỉ được khẳng định thông tin thực sự hiện diện trong nguồn; các câu hỏi ngoài miền hoặc thiếu dữ kiện cần được nhận diện riêng \cite{sample-data}.
+\subsection{Tổ chức nguồn tri thức và khoảng trống dữ liệu}
 
-\section{Phân tích theo các phần trong đề bài}
+Cơ sở tri thức (KB) được nạp từ thư mục \texttt{python/data/} gồm 7 tệp văn bản và 1 tệp từ điển thực thể \cite{sample-data}. Để bảo toàn trọn vẹn ngữ cảnh khi truy xuất và trích dẫn nguồn, dữ liệu được phân đoạn theo \textbf{ranh giới tự nhiên} của từng loại tệp:
 
-\subsection{Phần I: Văn phạm, sinh câu và parser}
-
-Grammar hiện có mô tả các dạng câu hỏi và yêu cầu trong miền Course Assistant. Phần việc được trình bày chi tiết ở báo cáo này là sinh câu từ grammar (Phần I.2). Parser là thành phần liên quan trong pipeline nhưng không phải nội dung triển khai cá nhân được khẳng định ở đây.
-
-\textbf{[TODO: Mô tả grammar/parser của nhóm, input/output và bằng chứng chạy Phần I.1/Phần I.3 nếu đã hoàn thành.]}
-
-\subsection{Phần II: Diễn giải ngữ nghĩa và lựa chọn phương pháp}
-
-Đề bài yêu cầu lựa chọn Classical/Statistical NLP hoặc mở rộng bằng LLM/RAG. Phần retrieval được thực hiện theo kế hoạch LLM/RAG, ở vai trò chuẩn bị nguồn tri thức, chunking và truy xuất context. Đây chưa phải mô tả rằng pipeline LLM/RAG end-to-end đã hoàn thành.
-
-Các bước retrieval có thể mô tả như sau:
-\[
-\text{query}
-\rightarrow \text{semantic hint (nếu có)}
-\rightarrow \text{query expansion}
-\rightarrow \text{TF-IDF + semantic ranking}
-\rightarrow \text{top-}k\text{ chunks / no context}.
-\]
-
-\textbf{[TODO: Ghi rõ lựa chọn cuối cùng của nhóm và mô tả các bước semantic, intent/entity, query construction, answer/LLM đã được tích hợp.]}
-
-\subsection{Phần III: Ngữ cảnh hội thoại}
-
-\textbf{[TODO: Điền nếu nhóm triển khai: loại tham chiếu hội thoại, state được lưu, cách giải tham chiếu trước retrieval và các ca cần hỏi lại.]}
-
-\subsection{Phần IV: Đánh giá}
-
-Đánh giá cần tách theo tầng. Với retrieval, có thể đo Hit@k/MRR trên các query có chunk kỳ vọng, và rejection rate trên query ngoài miền. Với answer generation, cần đánh giá độ đúng, groundedness, xử lý thiếu dữ liệu và citation; metric retrieval không thay thế các phép đo này. Bộ synthetic hiện có chỉ là phép kiểm tra tham chiếu, không phải tập test độc lập \cite{part1-retrieval}.
-
-\section{Quyết định thiết kế}
-
-\begin{longtable}{p{0.25\textwidth}p{0.34\textwidth}p{0.32\textwidth}}
+\begin{longtable}{p{0.22\textwidth}p{0.26\textwidth}p{0.43\textwidth}}
 \toprule
-Quyết định & Lựa chọn hiện tại & Lý do / đánh đổi \\
+Tệp nguồn & Đơn vị phân đoạn & Nội dung chính \\
 \midrule
-Chunking & Theo tuần, chương, FAQ, phần và mục dữ liệu & Giữ ranh giới nội dung có nghĩa và trace nguồn; chưa áp dụng chia theo kích thước/overlap. \\
-Biểu diễn retrieval & TF-IDF cosine & Baseline nhẹ, giải thích được và phù hợp để truy xuất bộ dữ liệu nhỏ. \\
-Semantic hint & Intent/entity khi parse được & Bổ sung tín hiệu miền; câu không parse được vẫn có thể dựa trên lexical retrieval. \\
-Top-k/ngưỡng & $k=3$, min score $0.08$ & Cấu hình trong code hiện tại; chưa được hiệu chỉnh trên bộ query viết tay độc lập. \\
-No-context & Không trả chunk nếu không vượt điều kiện lọc & Giảm việc chuyển context không liên quan sang tầng answer. \\
+\texttt{course\_info.txt} & Đoạn trống & Mã môn \texttt{CO3085}, tín chỉ, mô tả 3 phần và chuẩn đầu ra \texttt{L.O.} \\
+\texttt{schedule.txt} & Tiêu đề \texttt{WEEK} & Kế hoạch giảng dạy 15 tuần và lịch thi Midterm/Final. \\
+\texttt{topics.txt} & Tiêu đề \texttt{CHAPTER} & Nội dung, từ khóa và mục con của 12 chương. \\
+\texttt{assignments.txt} & Từng mục \texttt{PART} & Yêu cầu Phần I--IV của BTL, sản phẩm nộp và lưu ý dữ liệu mẫu. \\
+\texttt{regulations.txt} & Từng mục quy định & Điểm danh, trung thực học thuật, dùng AI, LLM/RAG và thư viện ngoài. \\
+\texttt{resources.txt} & Từng đầu sách/tài liệu & 3 giáo trình chính và 5 tài liệu tham khảo theo chuyên đề. \\
+\texttt{faq.txt} & Từng cặp \texttt{Q:} & 15 câu hỏi--đáp thường gặp của môn học. \\
+\texttt{entities.txt} & *(Từ điển đồng nghĩa)* & Chuẩn hóa tên gọi Việt--Anh về mã thực thể chung. \\
 \bottomrule
 \end{longtable}
 
-\textbf{[TODO: Nếu nhóm đã thay đổi cấu hình hoặc lựa chọn, cập nhật bảng theo phiên bản code và nêu bằng chứng.]}
+Rà soát nguồn tri thức cho thấy ba trường hợp thiếu dữ kiện có chủ đích: (1) ngày giờ deadline chính thức của BTL (chỉ có dữ liệu mẫu), (2) phòng học/địa điểm học, và (3) chương vượt quá Chương~12. Các trường hợp này là căn cứ để thiết kế cơ chế từ chối an toàn ở tầng trả lời.
+
+\section{Phân tích thiết kế theo từng phần của đề bài}
+
+Luồng triển khai chi tiết và sơ đồ tương tác giữa các module được trình bày ở Chương~4; phần này tập trung vào các quyết định thiết kế ở mức kiến trúc theo bốn phần của đề bài:
+
+\subsection{Phần I: Văn phạm, sinh câu và phân tích cú pháp}
+
+\begin{itemize}
+  \item \textbf{Văn phạm ngữ nghĩa (Semantic Grammar):} Thay vì dùng nhãn thuần cú pháp (\texttt{NP}, \texttt{VP}), văn phạm đặt ký hiệu phi kết thúc theo 9 nhóm ý định miền môn học (\texttt{<Q\_COURSE\_INFO>}, \texttt{<Q\_SCHEDULE>}, \texttt{<Q\_TOPIC>}, \texttt{<Q\_ASSIGNMENT>}, \texttt{<Q\_DEADLINE>}, \texttt{<Q\_RESOURCE>}, \texttt{<Q\_RULE>}, \texttt{<Q\_LO>}, \texttt{<Q\_UNKNOWN>}). Cách thiết kế này giảm nhập nhằng cấu trúc và suy thẳng ra ý định từ cây cú pháp.
+  \item \textbf{Sinh câu theo chiều rộng (BFS):} Duyệt dẫn xuất trái nhất bằng hàng đợi có giới hạn độ sâu và tổng số câu ($\le 10.000$ câu) để sinh các câu ngắn trước và bao phủ đều mọi nhóm câu hỏi.
+  \item \textbf{Earley Chart Parser:} Chọn giải thuật Earley vì hoạt động trực tiếp trên văn phạm tiếng Việt có cụm đa từ và luật rỗng mà không cần chuyển về dạng chuẩn Chomsky, đồng thời kiểm tra biên từ để tránh khớp nhầm tiền tố.
+  \item \textbf{Tách câu ghép đa ý định:} Giữ nguyên CFG đơn ý định làm bộ kiểm chứng; chỉ tách tại liên từ \emph{``và''} khi cả hai mệnh đề con đều parse được độc lập, nhờ đó không tách nhầm cụm thuật ngữ (\emph{``CFG và Parsing''}) hoặc câu so sánh hai chương.
+\end{itemize}
+
+\subsection{Phần II: Diễn giải ngữ nghĩa và lựa chọn mở rộng LLM/RAG}
+
+Nhóm chọn hướng \textbf{Mở rộng bằng LLM/RAG} nhưng giữ trọn vẹn tầng phân tích cú pháp và ngữ nghĩa từ Phần~I:
+\begin{itemize}
+  \item \textbf{Khung ngữ nghĩa thống nhất (\texttt{SemanticFrame}):} Biểu diễn cả câu hỏi lẫn từng chunk tài liệu qua cùng không gian \texttt{intent} và \texttt{entity\_ids} (chuẩn hóa từ nút cây cú pháp, từ điển đồng nghĩa \texttt{entities.txt} và regex số chương/tuần). Câu ngoài văn phạm (\texttt{UNPARSED}) giữ \texttt{intent=None} để tránh gán nhãn sai.
+  \item \textbf{Truy xuất tri thức lai:} Kết hợp độ tương đồng từ vựng TF-IDF ($0.75$) với độ khớp khung ngữ nghĩa ($0.25$), kèm mở rộng truy vấn để khắc phục lệch từ vựng Việt--Anh (ví dụ \emph{``gán nhãn từ loại''} với \emph{``POS tagging''}). Hệ thống ưu tiên tài liệu chính thống hơn \texttt{faq.txt} và chỉ lấy tối đa 3 chunk đạt ngưỡng; câu \texttt{UNKNOWN} bị loại ngay.
+  \item \textbf{Sinh câu trả lời có kiểm soát căn cứ:} Hệ thống hỗ trợ chế độ offline mặc định (trích xuất nguyên văn có nguồn, bảo đảm tái lập khi chấm Docker) và tùy chọn gọi API tương thích OpenAI qua biến môi trường. Prompt yêu cầu bắt buộc gắn nhãn \texttt{[Nguồn: ...]} và trả về \texttt{INSUFFICIENT\_CONTEXT} khi thiếu dữ kiện. Cơ chế bảo vệ 3 lớp chặn câu ngoài lề trước khi gọi LLM, kiểm tra thuộc tính thiếu trong KB, và hậu kiểm mọi trích dẫn cũng như con số, ngày, giờ, URL sau khi LLM sinh câu trả lời.
+\end{itemize}
+
+\subsection{Phần III: Xử lý ngữ cảnh hội thoại cục bộ}
+
+Hệ thống lưu trạng thái tối giản của lượt liền trước (câu hỏi, intent, thực thể câu hỏi, thực thể câu trả lời và danh sách ứng viên khi có nhiều chương). Bộ giải tham chiếu xử lý 6 mẫu phụ thuộc ngữ cảnh cục bộ: đại từ \emph{``nó''}, \emph{``chương này/đó''}, \emph{``còn chương sau?''}, \emph{``nội dung/chủ đề này''}, \emph{``phần này/đó''} và \emph{``tài liệu của phần này/chương này''}. Khi thiếu tiền từ (đầu hội thoại hoặc sau lệnh đặt lại) hoặc tiền từ mơ hồ (lượt trước nhắc nhiều chương cùng lúc), hệ thống chủ động yêu cầu người dùng làm rõ thay vì đoán mò.
+
+\subsection{Phần IV: Định hướng kiểm duyệt nhãn và đánh giá 4 tầng}
+
+Các câu sinh tự động từ văn phạm không thể dùng trực tiếp làm chuẩn chấm điểm vì có nhiều câu đại từ thiếu ngữ cảnh hội thoại và chưa bao gồm câu tự do ngoài văn phạm. Do đó, dữ liệu đánh giá được rà soát thủ công (Human Review) kết hợp tập câu kiểm thử độc lập và kịch bản hội thoại nhiều lượt. Quá trình đánh giá tách bạch thành 4 tầng (Parser, Semantic, Retrieval và End-to-End RAG/Guard) để xác định chính xác tầng nào phát sinh lỗi.
+
+\section{Tổng kết định hướng thiết kế}
+
+Nhìn chung, thiết kế của hệ thống \emph{Course Assistant} ưu tiên ba tiêu chí cốt lõi:
+\begin{itemize}
+  \item \textbf{Kết hợp NLP truyền thống và LLM/RAG:} Giữ vai trò kiểm soát của văn phạm CFG, Earley Parser và khung ngữ nghĩa, đồng thời tận dụng truy xuất lai và LLM để trả lời linh hoạt.
+  \item \textbf{Gọn nhẹ và chạy ổn định offline:} Các thành phần xử lý không phụ thuộc GPU và có chế độ chạy ngoại tuyến mặc định phục vụ kiểm thử tự động.
+  \item \textbf{An toàn thông tin:} Mọi câu trả lời đều phải bám sát tài liệu môn học qua cơ chế kiểm soát 3 lớp và chủ động hỏi lại hoặc từ chối khi thiếu dữ kiện.
+\end{itemize}

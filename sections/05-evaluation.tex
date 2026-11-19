@@ -1,28 +1,30 @@
 \chapter{Đánh giá}
 
-\section{Bằng chứng đã có cho phần retrieval}
+\section{Kết quả đánh giá theo từng tầng}
 
-Phép chạy tái lập hiện có dùng \texttt{samples\_labeled.jsonl}: 1.497 query synthetic. Kết quả được chạy bằng virtual environment của dự án với \texttt{--no-bypass-unknown}:
+Phép chạy tái lập hiện có dùng \texttt{samples\_labeled.jsonl}: 300 reviewed samples (\texttt{samples\_labeled.jsonl}). Kết quả được chạy bằng virtual environment của dự án với \texttt{--no-bypass-unknown}:
 
 \begin{center}
 \begin{tabular}{lr}
 \toprule
 Chỉ số & Kết quả \\
 \midrule
-Số mẫu & 1.497 \\
-Hit@3 trên mẫu có context kỳ vọng & 1.439/1.440 (99,9\%) \\
-UNKNOWN bị từ chối & 3/3 (100\%) \\
-INSUFFICIENT\_CONTEXT có retrieval liên quan & 54/54 \\
+Số mẫu reviewed & 300 \\
+Parser accuracy / exact tree match & 300/300 (100\%) / 300/300 (100\%) \\
+Semantic intent accuracy & 300/300 (100\%); entity F1 micro 100\% (89 TP) \\
+Retrieval Hit@3 độc lập & 241/283 (85,2\%) \\
+Refusal accuracy end-to-end & 4/17 (23,5\%) \\
+Over-answering trên \texttt{INSUFFICIENT\_CONTEXT} & 13/14 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Đây chỉ là phép đánh giá retrieval trên bộ synthetic: query phát sinh từ grammar và expected chunk labels được tạo tự động. Kết quả không được diễn giải thành accuracy của parser hoặc answer generator; metric không kiểm tra câu trả lời sinh có đúng hay được grounding tốt không. Một trường hợp Hit@3 không đạt do expected chunk ID cũ sau chuẩn hóa slug được nêu trong nhật ký công việc.
+Dataset này là tập 300 mẫu đã rà soát, nhưng không chứa mẫu \texttt{MULTI\_INTENT}; vì vậy không thể dùng các metric này để khẳng định độ chính xác multi-intent. Parser và semantic đạt 100% trên tập con này, không chứng minh khả năng tổng quát ngoài tập. Retrieval Hit@3 độc lập là 241/283 (85,2%), không phải 99,9%. Trong phép end-to-end, retrieval hit count khác (264/283; 93,3%) do đây là pipeline/metric riêng, không nên gộp hai con số.
 
 \section{Đánh giá toàn hệ thống}
 
-\textbf{[TODO: Điền nguồn và cách xây dựng tập kiểm thử độc lập; số query/turn; số câu đúng; metric theo từng tầng; lỗi tiêu biểu và nguyên nhân.]}
+Trong artifact, end-to-end có 296 ANSWERED; 296/296 citation hợp lệ theo kiểm tra của guard (100%). Tuy nhiên, refusal accuracy chỉ 4/17 (23,5%); 13 mẫu \texttt{INSUFFICIENT\_CONTEXT} vẫn bị ANSWERED. Không có \texttt{NEEDS\_REVIEW} trong artifact. LLM provider là mock, do đó không đo chất lượng của LLM thật.
 
 \section{Phân tích lỗi và hạn chế}
 
-\textbf{[TODO: Tối thiểu phân tích các trường hợp sai thực tế. Có thể phân loại theo grammar/parser, entity/alias, chunking, ranking/ngưỡng, thiếu dữ liệu, grounding/citation hoặc hội thoại; không dùng ví dụ giả định như kết quả đo.]}
+Các lỗi retrieval tập trung ở câu hỏi chương/tuần: FAQ hoặc chunk lân cận đôi khi xếp cao hơn chunk kỳ vọng. Nhóm lỗi nghiêm trọng hơn là over-answering: 13/14 câu thiếu context vẫn được trả lời. Cần phân biệt relevance với sufficiency, kiểm tra nhãn answerability và cải thiện context guard. Citation validity chỉ xác nhận nguồn được trích thuộc context đã gửi, không chứng minh entailment đầy đủ.

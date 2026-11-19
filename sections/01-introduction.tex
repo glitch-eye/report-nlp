@@ -2,32 +2,39 @@
 
 \section{Bối cảnh và mục tiêu}
 
-Bài tập lớn xây dựng một Course Assistant trong miền thông tin của môn học CO3085. Hệ thống cho phép sinh viên đặt câu hỏi bằng ngôn ngữ tự nhiên để tra cứu thông tin môn học. Pipeline theo đề bài đi từ grammar/parser và biểu diễn câu hỏi đến intent/entity, truy vấn knowledge base hoặc retrieval, rồi tạo câu trả lời. Đề bài yêu cầu hệ thống giới hạn trong dữ liệu môn học; khi thiếu bằng chứng, cần thông báo phù hợp thay vì tự tạo thông tin \cite{assignment}.
+Bài tập lớn xây dựng một Course Assistant trong miền tri thức của môn Xử lý ngôn ngữ tự nhiên (CO3085). Hệ thống hướng đến việc tiếp nhận câu hỏi tiếng Việt của sinh viên, nhận diện yêu cầu, xác định thực thể liên quan, truy xuất tài liệu môn học và tạo câu trả lời có căn cứ. Khác với một chatbot hỏi đáp mở, Course Assistant phải giới hạn câu trả lời trong knowledge base được cung cấp; khi dữ liệu không chứa câu trả lời hoặc không đủ bằng chứng, hệ thống cần thể hiện trạng thái thiếu thông tin thay vì suy đoán \cite{assignment}.
 
-Trong workspace hiện tại, phần có bằng chứng triển khai thuộc hai phạm vi: sinh câu từ CFG (Phần I.2) và knowledge base/retrieval (phần 1 trong kế hoạch LLM/RAG). Báo cáo trình bày cụ thể kiến thức nền, quyết định thiết kế, cách chạy và kết quả của hai phạm vi này. Các phần còn lại được để khung để cập nhật theo kết quả thực tế của nhóm.
+Bài toán có một số thách thức chính. Thứ nhất, cùng một ý định có thể được diễn đạt bằng nhiều cấu trúc câu và cách dùng từ khác nhau. Thứ hai, một câu có thể chứa nhiều yêu cầu độc lập, thường được nối bằng từ \emph{và}, nhưng không phải mọi từ nối đều biểu thị ranh giới giữa hai ý định. Thứ ba, truy xuất chỉ dựa trên từ khóa có thể bỏ sót tài liệu khi câu hỏi và tài liệu dùng cách diễn đạt khác nhau. Cuối cùng, một đoạn văn có liên quan chưa chắc chứa đủ thông tin để trả lời; do đó cần phân biệt retrieval relevance với answerability và kiểm soát citation.
 
-\section{Mục tiêu của phần việc}
+\section{Mục tiêu của hệ thống}
 
-Mục tiêu cụ thể:
+Các mục tiêu triển khai được chia theo pipeline:
+
 \begin{itemize}
-  \item áp dụng quy tắc CFG để sinh hữu hạn các câu hỏi tiếng Việt thuộc miền Course Assistant;
-  \item chuyển dữ liệu môn học thành các chunk có thể truy nguyên về tệp/section gốc;
-  \item truy xuất các chunk liên quan bằng điểm lexical kết hợp tín hiệu intent/entity khi có semantic frame;
-  \item cung cấp trace để kiểm tra câu hỏi, trạng thái parse, điểm xếp hạng và nguồn của từng kết quả.
+  \item \textbf{Phân tích cú pháp:} xây dựng CFG theo miền Course Assistant và sử dụng Earley parser để kiểm tra câu hỏi, tạo parse tree.
+  \item \textbf{Sinh và kiểm tra dữ liệu:} sinh các câu từ production của grammar trong giới hạn xác định; tạo JSONL chứa parse status, intent, entity và expected chunks để phục vụ kiểm thử.
+  \item \textbf{Diễn giải ngữ nghĩa:} ánh xạ parse tree thành semantic frame gồm intent, canonical entity IDs và trạng thái parse; hỗ trợ cả câu đơn ý định và câu đa ý định.
+  \item \textbf{Knowledge base và retrieval:} nạp dữ liệu môn học, chia thành các chunk có metadata nguồn, sau đó xếp hạng bằng TF-IDF cosine kết hợp tín hiệu semantic.
+  \item \textbf{Answer generation và grounding:} cung cấp context cho LLM adapter, yêu cầu câu trả lời dựa trên context và kiểm tra citation/factual claims bằng Answer Guard.
+  \item \textbf{Hội thoại và đánh giá:} lưu trạng thái hội thoại để giải một số tham chiếu đã định nghĩa; đánh giá từng tầng parser, semantic, retrieval và end-to-end.
 \end{itemize}
 
-\section{Phạm vi và phần chưa bao gồm}
+\section{Phạm vi triển khai và giới hạn}
 
-Không xem các nội dung dưới đây là kết quả đã hoàn thành chỉ dựa trên hai phần việc nêu trên:
+Phiên bản code được đối chiếu trong báo cáo là nhánh \texttt{feature/grammar-v5-multi-intent} của repository \texttt{glitch-eye/nlp}. Đây là nhánh phát triển đang được review, không đồng nghĩa với việc mọi chức năng đã được tích hợp vào nhánh \texttt{main}. Các kết quả và mô tả trong báo cáo cần được hiểu theo snapshot code và dữ liệu được ghi rõ ở từng phần.
+
+Phạm vi hiện thực bao gồm CFG tiếng Việt theo miền CO3085, bộ sinh câu có giới hạn, Earley parser, multi-intent clause validation, semantic frame, knowledge base, TF-IDF retrieval, assistant pipeline, mock/API LLM adapter, Answer Guard, dialogue state và các công cụ evaluation/label audit.
+
+Các giới hạn cần được giữ rõ:
 \begin{itemize}
-  \item xây dựng/đánh giá parser và semantic representation cho toàn bộ yêu cầu;
-  \item điều phối end-to-end, prompt, LLM sinh câu trả lời và kiểm tra citation;
-  \item quản lý ngữ cảnh hội thoại;
-  \item đánh giá độc lập câu trả lời toàn hệ thống.
+  \item CFG là grammar theo miền và theo các mẫu đã thiết kế, không phải bộ phân tích tiếng Việt tổng quát. Câu tự nhiên nằm ngoài production có thể bị \texttt{UNPARSED}.
+  \item Multi-intent chỉ được tạo khi các clause sau tách đều parse độc lập thành công bằng CFG hiện tại. Cơ chế này không giải quyết mọi cấu trúc phối hợp trong tiếng Việt.
+  \item Dialogue manager dùng các pattern tham chiếu được định nghĩa trước, không phải mô hình đồng tham chiếu tổng quát.
+  \item Retrieval dùng TF-IDF và tín hiệu semantic dựa trên luật; chưa phải dense retrieval hoặc neural reranker.
+  \item Mock LLM phục vụ chạy offline và kiểm thử tính nhất quán, không đại diện cho chất lượng của một mô hình ngôn ngữ thật.
+  \item Citation guard xác minh citation có trỏ đến chunk đã cung cấp và kiểm tra một số dạng facts có cấu trúc; điều này chưa chứng minh toàn bộ câu trả lời được entailment bởi nguồn.
 \end{itemize}
-
-\textbf{[TODO: Điền hướng cuối cùng của nhóm (Classical/Statistical NLP hoặc LLM/RAG), thành viên, phân công và các phần bổ sung do nhóm đã hoàn thành.]}
 
 \section{Bố cục báo cáo}
 
-Chương 2 giới thiệu kiến thức nền được áp dụng; Chương 3 phân tích bài toán và lựa chọn thiết kế; Chương 4 hướng dẫn triển khai và chạy thử; Chương 5 đánh giá kết quả, nêu giới hạn và các phần cần nhóm bổ sung; Chương 6 liệt kê tài liệu tham khảo.
+Chương 2 trình bày các kiến thức nền được sử dụng trong CFG, Earley parsing, semantic frame, retrieval, RAG và dialogue state. Chương 3 phân tích miền bài toán, kiến trúc pipeline và các quyết định thiết kế. Chương 4 mô tả module, môi trường và cách chạy các thành phần. Chương 5 trình bày kết quả evaluation hiện có, phân tích lỗi và giới hạn của phép đo. Chương 6 liệt kê tài liệu tham khảo.

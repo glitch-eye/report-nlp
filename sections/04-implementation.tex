@@ -1,8 +1,22 @@
 \chapter{Triển khai và chạy thử}
 
-\section{Cấu trúc triển khai}
+\section{Môi trường và tổ chức mã nguồn}
 
-Các thành phần thuộc phạm vi báo cáo nằm trong \texttt{sample-code-v1.0/python/nlp/app/}:
+Course Assistant được triển khai bằng Python trong thư mục \texttt{python/nlp/app/}. Mã nguồn được tổ chức theo mô hình phân tầng: văn phạm và parser, diễn giải ngữ nghĩa, knowledge base và retrieval, sinh câu trả lời, hội thoại, evaluation và giao diện HTTP. Mỗi thành phần có module chịu trách nhiệm riêng, giúp có thể chạy từng giai đoạn độc lập trước khi ghép thành pipeline hoàn chỉnh.
+
+Hệ thống yêu cầu Python 3.8 trở lên và khuyến nghị Python 3.10 trở lên. Các thư viện xử lý dữ liệu, TF-IDF, vector và CLI được khai báo trong \texttt{requirements.txt}. Phương thức triển khai đã kiểm thử là cài đặt bằng môi trường ảo và pip. Dockerfile hiện có vẫn dùng entrypoint mẫu \texttt{hcommon.cli}, không khởi chạy Course Assistant, nên chưa xem Docker là cách chạy chính thức của dự án.
+
+Cấu trúc mã nguồn chính gồm:
+\begin{itemize}
+  \item \textbf{Grammar và sinh câu:} \texttt{grammar\_file.py}, \texttt{course\_grammar.py} và \texttt{sentence\_generator.py} đọc luật CFG, sinh câu và áp dụng giới hạn tránh lặp vô hạn.
+  \item \textbf{Parser:} \texttt{parser.py} triển khai Earley Chart Parser; \texttt{run\_parser.py} cung cấp giao diện dòng lệnh.
+  \item \textbf{Ngữ nghĩa:} \texttt{semantic.py} và \texttt{semantic\_frame.py} tạo intent, entity chuẩn và trạng thái parse.
+  \item \textbf{Tri thức và truy xuất:} \texttt{knowledge\_base.py} chia dữ liệu thành chunk có metadata nguồn; \texttt{retriever.py} xếp hạng bằng TF-IDF kết hợp tín hiệu intent/entity.
+  \item \textbf{Hội thoại và trả lời:} \texttt{dialogue.py} quản lý ngữ cảnh, \texttt{prompt\_builder.py} tạo prompt, \texttt{llm\_client.py} kết nối Mock hoặc API tương thích OpenAI, và \texttt{answer\_guard.py} kiểm tra context, citation và facts.
+  \item \textbf{Điều phối và giao diện:} \texttt{assistant.py} điều phối pipeline; \texttt{run\_assistant.py} hỗ trợ batch, một câu và hội thoại tương tác; \texttt{api.py} cung cấp HTTP API.
+  \item \textbf{Evaluation:} \texttt{evaluation.py}, \texttt{rag\_evaluation.py}, \texttt{answer\_evaluation.py} và \texttt{unified\_evaluation.py} đánh giá từng tầng và toàn pipeline.
+\end{itemize}
+
 \begin{longtable}{p{0.32\textwidth}p{0.58\textwidth}}
 \toprule
 Module & Vai trò \\
@@ -19,82 +33,379 @@ Module & Vai trò \\
 \bottomrule
 \end{longtable}
 
-\section{Môi trường}
+\section{Luồng xử lý một câu hỏi}
 
-Đã chạy các lệnh bên dưới với virtual environment hiện có tại \texttt{sample-code-v1.0/python/.venv} (Python 3.13.3). Các lệnh phải được chạy từ thư mục \texttt{sample-code-v1.0/python/}.
+Mỗi truy vấn đi qua một pipeline thống nhất:
+\begin{enumerate}
+  \item \textbf{Chuẩn hóa và giải tham chiếu:} câu hỏi cùng ngữ cảnh lượt trước được gửi đến \texttt{DialogueManager}. Các đại từ hoặc cụm chỉ xuất như “nó”, “chương này” và “phần này” được thay bằng entity còn lưu trong \texttt{DialogueState}. Khi thiếu hoặc nhập nhằng tiền từ, hệ thống yêu cầu làm rõ thay vì đoán ngầm.
+  \item \textbf{Phân tích cú pháp:} Earley Parser đọc luật từ \texttt{nlp/app/output/grammar.txt}, chuẩn hóa Unicode và nhận diện terminal nhiều từ. Câu khớp tạo parse tree; câu ngoài văn phạm được đánh dấu \texttt{UNPARSED}.
+  \item \textbf{Diễn giải ngữ nghĩa:} hệ thống tạo \texttt{SemanticFrame} gồm intent, entity chuẩn và trạng thái parse. Ví dụ câu về nội dung chương được ánh xạ sang intent \texttt{GET\_TOPIC} cùng entity dạng \texttt{CH06}.
+  \item \textbf{Tách câu đa ý định:} module \texttt{multi\_intent.py} chỉ tách câu ghép khi từng mệnh đề được CFG xác nhận độc lập. Mỗi mệnh đề được xử lý riêng và kết quả được hợp nhất; từ “và” một mình không được xem là dấu hiệu đa intent.
+  \item \textbf{Truy xuất tri thức:} retriever kết hợp cosine similarity TF-IDF với độ khớp intent/entity, sau đó chọn tối đa ba chunk có điểm vượt ngưỡng.
+  \item \textbf{Sinh và kiểm tra câu trả lời:} prompt chỉ chứa context đã truy xuất cùng yêu cầu trích nguồn. Mock LLM được dùng mặc định để chạy offline; API tương thích OpenAI có thể được cấu hình khi cần đánh giá model thật.
+\end{enumerate}
 
-\begin{lstlisting}[language=bash]
-cd sample-code-v1.0/python
-\end{lstlisting}
+\subsection{Baseline tuần tự của một lần xử lý}
 
-Nếu cần tái tạo môi trường, cài thư viện theo manifest:
+Baseline của hệ thống là một chuỗi xử lý xác định: dữ liệu đầu ra của bước trước là đầu vào của bước sau, và pipeline dừng sớm khi không còn bằng chứng hoặc câu hỏi không thể parse an toàn. Ví dụ với câu \emph{“Chương 6 nói về gì?”}, trình tự baseline là:
 
-\begin{lstlisting}[language=bash]
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-\end{lstlisting}
-
-\section{Sinh câu}
-
-Chạy sinh câu theo grammar:
-
-\begin{lstlisting}[language=bash]
-.venv/bin/python -m nlp.app.utils
-\end{lstlisting}
-
-Đầu ra mặc định là \texttt{nlp/app/output/samples.txt}. Để đặt giới hạn và đường dẫn tường minh:
-
-\begin{lstlisting}[language=bash]
-.venv/bin/python -m nlp.app.utils \
-  --max-sentences 10000 \
-  --output nlp/app/output/samples.txt
-\end{lstlisting}
-
-\section{Chạy retrieval}
-
-Chạy bộ query mẫu từ knowledge base mặc định và ghi trace:
-
-\begin{lstlisting}[language=bash]
-.venv/bin/python -m nlp.app.run_retrieval \
-  --no-bypass-unknown \
-  --output nlp/app/output/retrieval.txt
-\end{lstlisting}
-
-Hoặc truyền đường dẫn dữ liệu/query:
-
-\begin{lstlisting}[language=bash]
-.venv/bin/python -m nlp.app.run_retrieval \
-  --data-dir ../../NLP_Course_Assistant_Sample_Data \
-  --queries ../../NLP_Course_Assistant_Sample_Data/sample_queries.txt \
-  --no-bypass-unknown \
-  --output nlp/app/output/retrieval.txt
-\end{lstlisting}
-
-Tùy chọn \texttt{--no-bypass-unknown} bảo đảm câu có nhãn \texttt{UNKNOWN} trong runner được gửi qua retriever thay vì tạo kết quả từ chối trực tiếp. Trace ghi trạng thái parse/retrieval, query mở rộng, intent/entity, điểm từng chunk và metadata nguồn.
-
-\section{Đánh giá retrieval trên JSONL synthetic}
-
-\begin{lstlisting}[language=bash]
-.venv/bin/python -m nlp.app.run_retrieval \
-  --labeled-jsonl nlp/app/output/samples_labeled.jsonl \
-  --no-bypass-unknown \
-  --output nlp/app/output/retrieval_samples.txt \
-  --evaluation-output nlp/app/output/retrieval_evaluation.json
-\end{lstlisting}
-
-\section{Input và output}
-
-\begin{longtable}{p{0.36\textwidth}p{0.54\textwidth}}
+\begin{longtable}{c p{0.24\textwidth} p{0.48\textwidth}}
 \toprule
-Tác vụ & File liên quan \\
+Bước & Thành phần & Thao tác và trạng thái sau bước \\
 \midrule
-Grammar & \texttt{nlp/app/output/grammar.txt} \\
-Câu được sinh & \texttt{nlp/app/output/samples.txt} \\
-Câu hỏi retrieval & \texttt{NLP\_Course\_Assistant\_Sample\_Data/sample\_queries.txt} \\
-Trace retrieval & \texttt{nlp/app/output/retrieval.txt} \\
-Tập synthetic có nhãn & \texttt{nlp/app/output/samples\_labeled.jsonl} \\
-Kết quả đánh giá JSON & \texttt{nlp/app/output/retrieval\_evaluation.json} \\
+1 & \texttt{DialogueManager} & Nhận câu hỏi và \texttt{DialogueState}; câu không phụ thuộc tiền từ nên giữ nguyên truy vấn. \\
+2 & \texttt{CourseParser} & Earley Parser phân tích câu thành cây \texttt{(S (Q\_TOPIC ...))}; nếu trả \texttt{None} thì chuyển sang \texttt{UNPARSED}. \\
+3 & \texttt{SemanticFrame} & Chuyển cây thành \texttt{intent=GET\_TOPIC} và \texttt{entities=chapter:CH06}. \\
+4 & \texttt{Retriever} & Mở rộng truy vấn bằng alias/entity, tính hybrid score và chọn tối đa ba chunk. \\
+5 & \texttt{Answer Guard} & Với truy vấn có chunk phù hợp, chuyển sang đóng gói prompt; không có context hoặc lexical support âm thì dừng với \texttt{NO\_RELEVANT\_CONTEXT}. \\
+6 & \texttt{Prompt Builder + LLM} & Gửi context đã được gắn citation cho Mock hoặc model API và nhận câu trả lời. \\
+7 & \texttt{Answer Guard} & Kiểm tra sentinel, citation và facts; xuất \texttt{ANSWERED}, \texttt{INSUFFICIENT\_CONTEXT} hoặc \texttt{NEEDS\_REVIEW}. \\
+8 & \texttt{DialogueState} & Cập nhật intent, entity, câu trả lời và nguồn để xử lý lượt hội thoại kế tiếp. \\
 \bottomrule
 \end{longtable}
 
-\textbf{[TODO: Bổ sung lệnh chạy parser, semantic/assistant, LLM, dialogue và Docker sau khi xác nhận trạng thái của nhóm. Chỉ ghi những lệnh đã chạy thành công.]}
+Baseline trên không chạy LLM cho câu ngoài ngữ cảnh: nếu bước 2 không cho cây parse, bước 4 vẫn có thể dùng truy vấn thô cho retrieval, nhưng bước 5 có quyền chặn theo \texttt{lexical\_support}. Với câu đa ý định, bước 2 trước tiên tạo các clause hợp lệ, sau đó các bước 3 đến 7 chạy cho từng clause rồi hợp nhất kết quả. Mỗi clause vẫn duy trì trạng thái và nguồn riêng để tránh một phần câu trả lời làm giả bối cảnh của phần còn lại.
+
+\paragraph{Cài đặt Earley Parser.}
+Đoạn điều phối cốt lõi dưới đây mô tả chart parsing: Completer nối thành tố đã hoàn tất với luật cha, Predictor mở rộng nonterminal và Scanner khớp terminal trong chuỗi đầu vào.
+\begin{lstlisting}[language=Python]
+def _parse_uncached(self, sentence):
+    text = unicodedata.normalize("NFC", sentence.strip())
+    chart = [set() for _ in range(len(text) + 1)]
+
+    # Khi thành tố phi kết thúc đã khớp hết:
+    if dot == len(prod):
+        node = ParseNode(lhs, children)
+        for p_lhs, p_prod, p_dot, p_orig, p_ch in list(chart[origin]):
+            if p_dot < len(p_prod) and p_prod[p_dot] == ("N", lhs):
+                add(pos, p_lhs, p_prod, p_dot + 1, p_orig, p_ch + (node,))
+
+    if kind == "N":
+        for child_prod in self.rules.get(sym, ()):
+            add(pos, sym, child_prod, 0, pos, ())
+    else:
+        if text[pos:m_end].casefold() == sym.casefold():
+            add(m_end, lhs, prod, dot + 1, origin,
+                children + (ParseNode(sym),))
+\end{lstlisting}
+
+\paragraph{Cài đặt tách câu đa ý định.}
+Hệ thống dùng quy hoạch động để giữ phân hoạch chỉ khi mỗi mệnh đề parse được bằng CFG. Từ “và” không tự động tạo nhiều intent.
+\begin{lstlisting}[language=Python]
+partition = best_from(0)
+return partition if partition and len(partition) > 1 else [text]
+
+validated = next(
+    (variant for variant in variants
+     if variant and parser.parse(variant) is not None),
+    None,
+)
+\end{lstlisting}
+
+\noindent Với \emph{“Chương 4 nói về gì và Tuần 5 học gì?”}, cả hai mệnh đề đều parse được nên hệ thống tạo \texttt{S\_MULTI}; cụm “CFG và Parsing” không tạo phân hoạch nếu vế trái không phải câu hợp lệ.
+\newpage
+\paragraph{Cập nhật trạng thái hội thoại.}
+\begin{lstlisting}[language=Python]
+def update(self, question, intent, entities,
+           answer_entities, sources, ambiguous_candidates=None):
+    self.last_question = question
+    if intent and intent != "UNKNOWN":
+        self.last_intent = intent
+    if entities:
+        self.last_entities = dict(entities)
+    self.last_answer_entities = list(dict.fromkeys(answer_entities or []))
+    self.last_sources = list(dict.fromkeys(sources or []))
+\end{lstlisting}
+
+\noindent Đây là trạng thái cục bộ cho lượt sau, chỉ xử lý các dạng tiền từ đã quy định trong \texttt{dialogue.py}.
+
+\clearpage
+\subsection{Sơ đồ luồng xử lý toàn hệ thống}
+
+Hình~\ref{fig:implementation-flow} mô tả luồng dữ liệu tuần tự của pipeline. Knowledge Base cung cấp bằng chứng; Answer Guard là cổng trước và sau LLM, còn Dialogue State giữ ngữ cảnh cho lượt kế tiếp.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.82\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=0.48cm,
+  box/.style={rectangle, rounded corners=2pt, draw=black!70, align=center,
+              minimum width=5.2cm, minimum height=0.72cm, font=\footnotesize},
+  kb/.style={cylinder, cylinder uses custom fill, cylinder body fill=gray!10,
+             cylinder end fill=gray!25, draw=black!70, shape border rotate=90,
+             aspect=0.22, align=center, minimum height=1.15cm, minimum width=4.2cm,
+             font=\footnotesize},
+  stop/.style={box, draw=orange!75!black, fill=orange!8, text width=4.8cm},
+  ok/.style={box, draw=green!50!black, fill=green!8, text width=5.0cm},
+  arr/.style={-{Stealth[length=2mm]}, thick, draw=black!70}
+]
+  \node[box] (u) {User};
+  \node[box, below=of u] (cli) {CLI / HTTP API};
+  \node[box, below=of cli] (ca) {CourseAssistant};
+  \node[box, below=of ca] (dm) {Dialogue Manager};
+  \node[box, below=of dm] (parser) {Grammar v5 / Earley Parser};
+  \node[box, below=of parser] (frame) {Semantic Frame};
+  \node[box, below=of frame] (rt) {Hybrid Retriever};
+  \node[kb, right=1.6cm of rt] (kb) {Course Knowledge Base};
+  \node[box, below=of rt] (chunks) {Ranked Evidence Chunks};
+  \node[box, below=of chunks] (g1) {Pre-generation Answer Guard};
+  \node[box, below left=0.55cm and 0.15cm of g1] (rf) {Insufficient / No context\\Refusal Response};
+  \node[box, below right=0.55cm and 0.15cm of g1] (pb) {Prompt Builder};
+  \node[box, below=of pb] (llm) {LLM Client};
+  \node[box, below left=0.55cm and 0.15cm of llm] (mock) {Mock LLM / Fallback};
+  \node[box, below right=0.55cm and 0.15cm of llm] (api) {OpenAI-compatible API};
+  \node[box, below=1.7cm of llm] (g2) {Post-generation Answer Guard};
+  \node[stop, below left=0.55cm and 0.15cm of g2] (rev) {NEEDS\_REVIEW\\Unsupported facts / Invalid citations};
+  \node[ok, below right=0.55cm and 0.15cm of g2] (ans) {Valid answer\\ANSWERED};
+  \node[box, below=1.7cm of g2] (out) {Response + Sources + Status};
+
+  \draw[arr] (u) -- (cli); \draw[arr] (cli) -- (ca); \draw[arr] (ca) -- (dm);
+  \draw[arr] (dm) -- (parser); \draw[arr] (parser) -- (frame); \draw[arr] (frame) -- (rt);
+  \draw[arr] (kb) -- (rt); \draw[arr] (rt) -- (chunks); \draw[arr] (chunks) -- (g1);
+  \draw[arr] (g1) -- node[left,font=\scriptsize]{sufficient} (pb);
+  \draw[arr] (g1) -- node[left,font=\scriptsize]{insufficient} (rf);
+  \draw[arr] (pb) -- (llm); \draw[arr] (llm) -- (api); \draw[arr] (llm) -- (mock);
+  \draw[arr] (api) -- (g2); \draw[arr] (mock) -- (g2);
+  \draw[arr] (g2) -- node[left,font=\scriptsize]{valid} (ans);
+  \draw[arr] (g2) -- node[right,font=\scriptsize]{invalid} (rev);
+  \draw[arr] (rf) |- (out); \draw[arr] (ans) -- (out); \draw[arr] (rev) |- (out);
+  \draw[arr] (out) -| ([xshift=-2.2cm]u.west) |- (u);
+  \draw[arr, dashed] ([xshift=2.0cm]ca.east) -- ++(1.8,0) node[right,box,minimum width=2.8cm] {Dialogue State};
+\end{tikzpicture}}
+\caption{Luồng triển khai tuần tự của Course Assistant.}
+\label{fig:implementation-flow}
+\end{figure}
+
+\subsection{Trình tự tương tác của một truy vấn}
+
+Sơ đồ trình tự làm rõ thứ tự gọi và dữ liệu trao đổi giữa các thành phần trong một lượt. Các nhánh \texttt{NO\_RELEVANT\_CONTEXT} và \texttt{INSUFFICIENT\_CONTEXT} kết thúc ở mức từ chối; nhánh LLM tiếp tục qua kiểm tra hậu sinh.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[x=2.15cm, y=-0.92cm,
+  part/.style={rectangle, rounded corners=2pt, draw=black!70, fill=gray!8,
+               align=center, minimum width=2.05cm, minimum height=0.62cm, font=\scriptsize},
+  lifeline/.style={dashed, draw=gray!60},
+  msg/.style={-{Stealth[length=1.8mm]}, thick, draw=black!75},
+  ret/.style={-{Stealth[length=1.8mm]}, dashed, thick, draw=black!55},
+  box/.style={rectangle, draw=gray!60, fill=gray!3, align=center, font=\scriptsize,
+              inner sep=3pt}
+]
+  \foreach \x/\name in {0/User,1/CLI/API,2/CourseAssistant,3/Dialogue+Parser,4/Semantic+Retriever,5/Guard+LLM} {
+    \node[part] (p\x) at (\x,0) {\name};
+    \draw[lifeline] (p\x.south) -- ++(0,-13);
+  }
+
+  \draw[msg] (0,-1) -- node[above,font=\scriptsize]{Submit question} (1,-1);
+  \draw[msg] (1,-2) -- node[above,font=\scriptsize]{answer(question, state)} (2,-2);
+  \draw[msg] (2,-3) -- node[above,font=\scriptsize]{Resolve references} (3,-3);
+  \draw[ret] (3,-4) -- node[above,font=\scriptsize]{Resolved query} (2,-4);
+  \draw[msg] (2,-5) -- node[above,font=\scriptsize]{Parse + semantic frame} (4,-5);
+  \draw[ret] (4,-6) -- node[above,font=\scriptsize]{Intent + entities + chunks} (2,-6);
+
+  \node[box] at (3.0,-7.25) {Guard: FOUND?};
+  \draw[msg] (2,-7.25) -- (5,-7.25);
+  \draw[ret] (5,-8.25) -- node[above,font=\scriptsize]{NO\_RELEVANT / INSUFFICIENT} (2,-8.25);
+
+  \draw[msg] (2,-9.25) -- node[above,font=\scriptsize]{Generate grounded prompt} (5,-9.25);
+  \draw[ret] (5,-10.25) -- node[above,font=\scriptsize]{Answer / Mock fallback} (2,-10.25);
+  \draw[msg] (2,-11.25) -- node[above,font=\scriptsize]{Validate citation + facts} (5,-11.25);
+  \draw[ret] (5,-12.25) -- node[above,font=\scriptsize]{ANSWERED / NEEDS\_REVIEW} (2,-12.25);
+  \draw[ret] (2,-13.25) -- node[above,font=\scriptsize]{Response + sources + status} (1,-13.25);
+  \draw[ret] (1,-14) -- node[above,font=\scriptsize]{Display result} (0,-14);
+\end{tikzpicture}}
+\caption{Trình tự tương tác giữa các thành phần trong một lượt hỏi đáp.}
+\label{fig:implementation-sequence}
+\end{figure}
+
+\subsection{Luồng xử lý câu đa ý định}
+
+Câu nhiều intent được xử lý độc lập theo từng clause sau khi câu ghép pass được bước parse xác nhận. Sơ đồ sau thể hiện nhánh tách câu, xử lý song song theo logic và hợp nhất kết quả.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.92\textwidth}{!}{%
+\begin{tikzpicture}[node distance=0.48cm,
+  box/.style={rectangle, rounded corners=2pt, draw=black!70, align=center,
+              minimum width=4.2cm, minimum height=0.72cm, font=\footnotesize},
+  clause/.style={box, draw=blue!55!black, fill=blue!5, text width=3.6cm},
+  arr/.style={-{Stealth[length=2mm]}, thick, draw=black!70}]
+  \node[box] (in) {Câu hỏi có nhiều ý định};
+  \node[box, below=of in] (split) {\texttt{split\_intent\_clauses()}};
+  \node[diamond, below=of split, draw=black!70, align=center, inner sep=3pt,
+        font=\footnotesize] (valid) {Mệnh đề hợp lệ};
+  \node[clause, below left=0.7cm and 2.5cm of valid] (c1) {Clause 1\\Parse + Semantic Frame};
+  \node[clause, below=1.55cm of valid] (c2) {Clause 2\\Parse + Semantic Frame};
+  \node[clause, below right=0.7cm and 2.5cm of valid] (cn) {Clause N\\Parse + Semantic Frame};
+  \node[box, below=1.2cm of c2] (merge) {Retrieve + Answer Guard + LLM cho từng clause};
+  \node[box, below=of merge] (dedup) {Gộp câu trả lời, source và chunk ID};
+  \node[box, below=of dedup] (status) {Xác định trạng thái tổng hợp};
+  \node[box, below=of status, draw=green!50!black, fill=green!8] (out) {\texttt{MULTI\_INTENT} Response};
+
+  \draw[arr] (in) -- (split); \draw[arr] (split) -- (valid);
+  \draw[arr] (valid) -- node[left,font=\scriptsize]{nhiều} (c1);
+  \draw[arr] (valid) -- node[right,font=\scriptsize]{nhiều} (cn);
+  \draw[arr] (valid) -- (c2);
+  \draw[arr] (c1) |- (merge); \draw[arr] (c2) -- (merge); \draw[arr] (cn) |- (merge);
+  \draw[arr] (merge) -- (dedup); \draw[arr] (dedup) -- (status); \draw[arr] (status) -- (out);
+\end{tikzpicture}}
+\caption{Luồng xử lý một câu hỏi đa ý định.}
+\label{fig:implementation-multi-flow}
+\end{figure}
+
+\section{Knowledge Base và retrieval}
+
+Knowledge Base được nạp trực tiếp từ thư mục dữ liệu môn học, gồm thông tin chung, lịch tuần, nội dung chương, bài tập, tài liệu, quy định, FAQ và từ điển entity. \texttt{knowledge\_base.py} phân đoạn tài liệu theo ranh giới ngữ nghĩa rồi gắn \texttt{chunk\_id}, nội dung, source, section, entity và loại tài liệu. Metadata này cho phép truy nguyên câu trả lời về file và mục cụ thể.
+
+Retriever dùng hai tín hiệu: điểm lexical là cosine similarity TF-IDF giữa truy vấn và chunk; điểm semantic đo độ khớp intent/entity. Cấu hình mặc định lấy tối đa ba chunk, ngưỡng tổng hợp 0.08 và kết hợp 75\% lexical với 25\% semantic. Khi câu có intent \texttt{UNKNOWN} hoặc không có hỗ trợ từ vựng, retriever không dùng intent/entity để bịa context.
+
+Phần mở rộng truy vấn đối chiếu alias và thêm entity theo câu hỏi:
+\begin{lstlisting}[language=Python]
+for alias, entity_id, canonical in self.aliases:
+    normalized_alias = " " + _normalize(alias) + " "
+    if normalized_alias.strip() and normalized_alias in normalized_query:
+        additions.extend([canonical, _entity_token(entity_id)])
+
+for pattern, formatter in (
+    (r"\\b(?:chương|chapter)\\s+0?(\\d{1,2})\\b",
+     lambda m: "CH{:02d}".format(int(m.group(1)))),
+    (r"\\b(?:tuần|week)\\s+(?:thứ\\s+)?0?(\\d{1,2})\\b",
+     lambda m: "WEEK_{:02d}".format(int(m.group(1)))),
+):
+    match = re.search(pattern, query, re.IGNORECASE)
+    if match:
+        additions.append(_entity_token(formatter(match)))
+\end{lstlisting}
+
+\noindent Do đó câu tiếng Việt có thể được ánh xạ tới chunk chứa “gán nhãn từ loại” hoặc token entity chuẩn như \texttt{CH06} thay vì chỉ khớp chuỗi câu gốc.
+
+\section{Sinh câu trả lời và Answer Guard}
+
+Hệ thống không xem intent hoặc entity là bằng chứng nội dung; chỉ các chunk được chọn mới tạo thành context cho LLM. Ba chốt kiểm tra được áp dụng:
+\begin{enumerate}
+  \item \textbf{Tiền kiểm tra:} nếu không có chunk liên quan, câu không thuộc miền bài toán hoặc query không có hỗ trợ từ vựng, pipeline chặn việc gọi LLM và trả trạng thái thiếu context.
+  \item \textbf{Kiểm tra đầu ra:} chuỗi \texttt{INSUFFICIENT\_CONTEXT} được chuyển thành trạng thái từ chối thay vì tạo câu trả lời thay thế.
+  \item \textbf{Hậu kiểm tra:} citation phải trỏ đến chunk thực sự có trong prompt. Số, ngày, giờ, email hoặc URL trong câu trả lời phải xuất hiện trong chunk gốc; nếu không, kết quả chuyển sang \texttt{NEEDS\_REVIEW}.
+\end{enumerate}
+
+Ba chốt này hạn chế hallucination nhưng không chứng minh toàn bộ nội dung câu trả lời có quan hệ entailment hoàn chỉnh với nguồn. Fact guard chủ yếu dựa trên regex, còn citation validity chỉ xác nhận nguồn nằm trong context đã gửi.
+
+Mã tiền kiểm tra chỉ trả kết quả OK khi retrieval có chunk phù hợp và semantic đã neo bằng intent/entity hoặc từ khóa có hỗ trợ:
+\begin{lstlisting}[language=Python]
+chunks = (retrieval or {}).get("chunks") or []
+if (retrieval or {}).get("retrieval_status") != "FOUND" or not chunks:
+    return {"status": "NO_RELEVANT_CONTEXT", "answer": NO_CONTEXT_MSG}
+
+if sem.get("entity_ids") or intent not in _NO_REAL_INTENT:
+    return {"status": "OK", "answer": None}
+if intent == "UNKNOWN" or lexical_support(question, chunks) <= 0:
+    return {"status": "NO_RELEVANT_CONTEXT", "answer": NO_CONTEXT_MSG}
+\end{lstlisting}
+
+Sau khi model trả lời, guard chuẩn hóa facts, bỏ citation khỏi phần claim và đối chiếu với chunk đã gửi:
+\begin{lstlisting}[language=Python]
+claim_text = _CITATION.sub(" ", answer or "")
+evidence = set()
+for chunk in chunks:
+    evidence |= facts_in(chunk.get("text", ""))
+    evidence |= facts_in(chunk.get("section", ""))
+unsupported = sorted(f for f in facts_in(claim_text) if f not in evidence)
+\end{lstlisting}
+
+\noindent Ví dụ số \texttt{05} trong \texttt{WEEK 05} được chuẩn hóa về cùng dạng với \emph{“tuần 5”}; nếu fact xuất hiện trong câu trả lời nhưng không có trong context, pipeline chuyển sang \texttt{NEEDS\_REVIEW}.
+
+\section{Giao diện chạy và API}
+
+Các chương trình được chạy từ thư mục \texttt{python/}. Cài đặt cơ bản gồm tạo virtual environment, cài \texttt{requirements.txt} và cài package ở chế độ editable. Một số lệnh chính:
+\begin{lstlisting}[language=bash]
+python -m nlp.app.utils
+python -m nlp.app.run_parser
+python -m nlp.app.run_retrieval
+python -m nlp.app.run_assistant --data-dir data
+python -m nlp.app.run_assistant --data-dir data --interactive
+python -m unittest discover -s test -v
+\end{lstlisting}
+
+Trong đó, \texttt{utils} sinh câu theo CFG, \texttt{run\_parser} chạy phân tích cú pháp, \texttt{run\_retrieval} chạy truy xuất độc lập, còn \texttt{run\_assistant} điều phối pipeline hội thoại. Với một câu đơn có thể thêm \texttt{--question} và \texttt{--json}; chế độ tương tác dùng \texttt{reset} để xóa ngữ cảnh và \texttt{exit} để kết thúc.
+
+HTTP API được khởi động bằng \texttt{python -m nlp.app.api}. API cung cấp \texttt{/retrieve} để lấy chunk, \texttt{/answer} để chạy pipeline trả lời, \texttt{/reset} để xóa trạng thái hội thoại và \texttt{/health} để kiểm tra retriever. API mặc định dùng Mock. Muốn gọi model tương thích OpenAI, cấu hình \texttt{LLM\_PROVIDER}, \texttt{LLM\_MODEL}, \texttt{OPENAI\_API\_KEY} và \texttt{OPENAI\_BASE\_URL} trước khi khởi động server.
+
+\section{Sinh dataset và pipeline đánh giá}
+
+\texttt{build\_sample\_dataset.py} sinh tối đa 10.000 câu từ grammar và tạo JSONL kèm parse status, intent, entity, chunk kỳ vọng và khả năng answer. Các nhãn do builder sinh tự động chỉ có trạng thái \texttt{AUTO\_LABEL\_REQUIRES\_REVIEW}; chúng không được coi là gold label.
+
+Để tạo tập reviewed, \texttt{label\_audit.py} chọn mẫu phân tầng theo intent, parse shape, entity và answerability cho người xem xét. Sau khi điền các nhãn được xác nhận, script xuất riêng \texttt{samples\_reviewed.jsonl}. Evaluation nên chạy trên tập reviewed để phân tích kết quả có kiểm chứng, trong khi toàn bộ dataset hữu ích cho regression và kiểm tra độ phủ.
+
+\subsection{Sơ đồ pipeline evaluation}
+
+Các kết quả evaluation được tạo theo hai luồng song song. Luồng đầu sử dụng \texttt{samples\_reviewed.jsonl} để đánh giá parser, semantic, retrieval và RAG; luồng hai chạy \texttt{answer\_eval\_smoke.jsonl} qua \texttt{CourseAssistant} để đo answer generation, guard và telemetry. Hai luồng sau đó hợp nhất vào báo cáo thống nhất.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.88\textwidth}{!}{%
+\begin{tikzpicture}[node distance=0.45cm,
+  box/.style={rectangle, rounded corners=2pt, draw=black!70, align=center,
+              minimum width=3.6cm, minimum height=0.72cm, font=\footnotesize,
+              text width=3.45cm},
+  data/.style={box, fill=gray!8, draw=gray!70},
+  eval/.style={box, fill=blue!5, draw=blue!55!black},
+  merge/.style={box, fill=green!8, draw=green!50!black},
+  arr/.style={-{Stealth[length=2mm]}, thick, draw=black!70}]
+  \node[data] (kb) {Course Knowledge Base};
+  \node[data, right=of kb] (grammar) {Grammar v5};
+  \node[box, below=0.65cm of $(kb)!0.5!(grammar)$] (builder) {Grammar and\\Sample Builder};
+
+  \node[data, below=of builder] (labeled) {\texttt{samples\_labeled.jsonl}};
+  \node[box, below=of labeled] (auto) {Automatic Labels};
+  \node[box, below=of auto] (audit) {Label Audit};
+  \node[box, below=of audit] (queue) {Stratified Review Queue};
+  \node[box, below=of queue] (review) {Human Reviewer};
+  \node[diamond, below=of review, draw=black!70, align=center, inner sep=3pt,
+        font=\footnotesize] (decision) {Review decision};
+  \node[merge, below left=0.7cm and 0.15cm of decision] (reviewed) {\texttt{samples\_reviewed.jsonl}};
+  \node[data, below right=0.7cm and 0.15cm of decision] (exclude) {Exclude /\\Review again};
+
+  \node[eval, below=1.35cm of reviewed] (nlp) {NLP Evaluation};
+  \node[eval, below left=0.65cm and 1.15cm of nlp] (parser) {Parser Evaluation};
+  \node[eval, below=0.65cm of nlp] (semantic) {Semantic Evaluation};
+  \node[eval, below right=0.65cm and 1.15cm of nlp] (retrieval) {Retrieval Evaluation};
+  \node[eval, below=1.65cm of nlp] (rag) {Deterministic RAG Evaluation};
+
+  \node[data, right=3.0cm of nlp] (smoke) {\texttt{answer\_eval\_smoke.jsonl}};
+  \node[eval, below=of smoke] (answer) {Answer Generation\\Evaluation};
+  \node[box, below=of answer] (assistant) {CourseAssistant};
+  \node[box, below=of assistant] (llm) {Mock / Real LLM};
+  \node[box, below=of llm] (guard) {Answer Guard\\+ Telemetry};
+  \node[eval, below=of guard] (metrics) {Answer Metrics};
+
+  \node[merge, below=2.0cm of rag, minimum width=7.0cm] (unified) {Unified Evaluation Report};
+  \node[merge, below left=0.65cm and 0.8cm of unified] (json) {JSON Report};
+  \node[merge, below right=0.65cm and 0.8cm of unified] (md) {Markdown Report};
+
+  \draw[arr] (kb) |- (builder); \draw[arr] (grammar) |- (builder);
+  \draw[arr] (builder) -- (labeled); \draw[arr] (labeled) -- (auto);
+  \draw[arr] (auto) -- (audit); \draw[arr] (audit) -- (queue);
+  \draw[arr] (queue) -- (review); \draw[arr] (review) -- (decision);
+  \draw[arr] (decision) -- node[left,font=\scriptsize]{accepted/corrected} (reviewed);
+  \draw[arr] (decision) -- node[right,font=\scriptsize]{rejected/unresolved} (exclude);
+  \draw[arr] (reviewed) -- (nlp);
+  \draw[arr] (nlp) -- (parser); \draw[arr] (nlp) -- (semantic);
+  \draw[arr] (nlp) -- (retrieval); \draw[arr] (nlp) -- (rag);
+
+  \draw[arr] (smoke) -- (answer); \draw[arr] (answer) -- (assistant);
+  \draw[arr] (assistant) -- (llm); \draw[arr] (llm) -- (guard);
+  \draw[arr] (guard) -- (metrics);
+
+  \draw[arr] (parser) |- (unified); \draw[arr] (semantic) |- (unified);
+  \draw[arr] (retrieval) |- (unified); \draw[arr] (rag) |- (unified);
+  \draw[arr] (metrics) |- (unified);
+  \draw[arr] (unified) -- (json); \draw[arr] (unified) -- (md);
+\end{tikzpicture}}
+\caption{Pipeline tổng hợp các loại đánh giá của hệ thống.}
+\label{fig:implementation-evaluation-flow}
+\end{figure}
+
+Luồng \texttt{samples\_reviewed.jsonl} là nguồn gold label đã được rà soát và được ưu tiên cho kết luận học thuật. Trong khi đó, \texttt{answer\_eval\_smoke.jsonl} kiểm tra khả năng sinh câu, trích dẫn, trạng thái guard và telemetry của từng lần gọi Assistant. Kết quả Mock, scripted probe và model thật không được gộp thành một chỉ số chung vì điều kiện chạy và phương sai của chúng khác nhau.
+
+Các artifact chính gồm grammar và câu sinh, kết quả parse/retrieval, trace hội thoại, dataset nhãn, report đánh giá và câu trả lời. Lệnh \texttt{python -m nlp.app.evaluation} có thể đo parser, semantic frame, retrieval độc lập, answerability end-to-end và RAG evidence. \texttt{rag\_evaluation.py} là evaluator độc lập cho grounded examples, no-info examples và scripted Answer Guard probes. Không gộp kết quả Mock, scripted probe và model thật trong cùng một metric, vì ba loại kết quả này phản ánh điều kiện kiểm thử khác nhau.

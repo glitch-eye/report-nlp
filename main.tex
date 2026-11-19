@@ -1,35 +1,46 @@
 \documentclass[12pt,a4paper]{report}
 
+% Vietnamese typesetting (compile with XeLaTeX or LuaLaTeX)
 \usepackage{fontspec}
 \usepackage{polyglossia}
 \setdefaultlanguage{vietnamese}
 \IfFontExistsTF{Times New Roman}
   {\setmainfont{Times New Roman}}
   {\setmainfont{Latin Modern Roman}}
-\usepackage[a4paper,margin=2.5cm]{geometry}
+
+\usepackage[a4paper,margin=2.5cm,headheight=36pt,headsep=0.6cm,footskip=1.1cm]{geometry}
 \usepackage{setspace}
 \usepackage{booktabs}
 \usepackage{longtable}
-\usepackage{amsmath}
+\usepackage{amsmath,amssymb}
 \usepackage{hyperref}
 \usepackage{xurl}
 \usepackage{enumitem}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning}
 \usepackage{graphicx}
 \usepackage{caption}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,calc}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{float}
+\usepackage{array}
 
 \hypersetup{
   colorlinks=true,
-  linkcolor=blue,
-  urlcolor=blue,
-  citecolor=blue,
+  linkcolor=blue!60!black,
+  urlcolor=blue!60!black,
+  citecolor=blue!60!black,
   pdftitle={Báo cáo bài tập lớn Course Assistant},
   pdfauthor={Nhóm thực hiện}
 }
 \setstretch{1.25}
 \setlist[itemize]{leftmargin=1.5em}
 \setlist[enumerate]{leftmargin=1.8em}
+\captionsetup{font=small,labelfont=bf}
 \lstset{
   basicstyle=\ttfamily\small,
   breaklines=true,
@@ -45,7 +56,9 @@
   {\large TRƯỜNG ĐẠI HỌC BÁCH KHOA -- ĐHQG TP.HCM\par}
   \vspace{0.5cm}
   {\large KHOA KHOA HỌC VÀ KỸ THUẬT MÁY TÍNH\par}
-  \vspace{2cm}
+  \vspace{1cm}
+  \includegraphics[width=3.5cm]{hcmut.png}\par
+  \vspace{1cm}
   {\Large\bfseries BÁO CÁO BÀI TẬP LỚN\par}
   \vspace{0.5cm}
   {\LARGE\bfseries TRỢ LÝ HỖ TRỢ HỌC TẬP THÔNG MINH\par}
@@ -54,27 +67,30 @@
   \vfill
   \begin{tabular}{rl}
     \textbf{Môn học:} & Xử lý ngôn ngữ tự nhiên (CO3085) \\
-    \textbf{Giảng viên:} & [TODO: Họ tên giảng viên] \\
-    \textbf{Nhóm:} & [TODO: Mã nhóm] \\
-    \textbf{Thành viên:} & [TODO: Họ tên -- MSSV từng thành viên] \\
-    & [TODO: Họ tên -- MSSV từng thành viên] \\
-    & [TODO: Họ tên -- MSSV từng thành viên] \\
+    \textbf{Giảng viên:} & Võ Thanh Hùng \\
+    \textbf{Nhóm:} & Nhóm 6 \\
+    \textbf{Thành viên:} & Nguyễn Văn Bảo -- 2433037 \\
+    & Phạm Xuân Bắc -- 2310280 \\
     & [TODO: Họ tên -- MSSV từng thành viên] \\
     \textbf{Học kỳ:} & HK261 \\
   \end{tabular}
   \vfill
-  {\large TP. Hồ Chí Minh, [TODO: tháng/năm]\par}
+  {\large TP. Hồ Chí Minh\par}
 \end{titlepage}
 
 \pagenumbering{roman}
 \chapter*{Tóm tắt}
 \addcontentsline{toc}{chapter}{Tóm tắt}
-\textbf{[TODO: Tóm tắt mục tiêu, pipeline cuối cùng, phương pháp, kết quả toàn hệ thống và kết luận.]}
+Báo cáo trình bày quá trình xây dựng Course Assistant cho miền tri thức môn Xử lý ngôn ngữ tự nhiên (CO3085). Hệ thống tiếp nhận câu hỏi tiếng Việt, phân tích bằng văn phạm phi ngữ cảnh và Earley parser, chuyển kết quả thành semantic frame, truy xuất các đoạn tri thức liên quan, sau đó hỗ trợ tạo câu trả lời có căn cứ và kiểm tra citation. Thiết kế cũng xem xét câu hỏi đa ý định, trạng thái hội thoại và khả năng từ chối khi nguồn không cung cấp đủ thông tin.
+
+Phần đánh giá được trình bày theo từng tầng thay vì gộp thành một chỉ số duy nhất. Trên snapshot dữ liệu reviewed gồm 300 mẫu, parser và semantic intent đạt 100\%; retrieval Hit@3 độc lập đạt 85,2\%. Tuy nhiên, refusal accuracy end-to-end mới đạt 23,5\%, với 13/14 trường hợp thiếu context vẫn được trả lời. Tập đánh giá hiện chưa có mẫu multi-intent nên chưa thể kết luận định lượng về độ chính xác của chức năng này. Các kết quả cho thấy hệ thống đã có pipeline và công cụ đánh giá theo tầng, đồng thời còn cần cải thiện answerability guard và mở rộng tập kiểm thử độc lập.
 
 \tableofcontents
 \clearpage
-\pagenumbering{arabic}
+\listoffigures
+\clearpage
 
+\pagenumbering{arabic}
 \input{sections/01-introduction}
 \input{sections/02-knowledge}
 \input{sections/03-analysis}
