@@ -1,0 +1,65 @@
+\xpginauxfiletrue 
+\selectlanguage *{vietnamese}
+\contentsline {chapter}{Tóm tắt}{i}{chapter*.1}%
+\contentsline {chapter}{\numberline {1}Giới thiệu}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Bối cảnh và bài toán}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Hướng tiếp cận}{2}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Đóng góp của báo cáo}{2}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Phạm vi và giới hạn}{2}{section.1.4}%
+\contentsline {section}{\numberline {1.5}Bố cục báo cáo}{3}{section.1.5}%
+\contentsline {chapter}{\numberline {2}Kiến thức nền áp dụng}{4}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Tổng quan NLP, phân tầng ngôn ngữ và đánh giá hệ thống}{4}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Phạm vi ứng dụng và mô hình Hỏi--Đáp (QA)}{4}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Các mức phân tích ngôn ngữ và đánh giá hệ thống}{5}{subsection.2.1.2}%
+\contentsline {section}{\numberline {2.2}Văn phạm phi ngữ cảnh và giải thuật Chart Parsing}{5}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Định nghĩa CFG và tiêu chí đánh giá văn phạm}{5}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Sinh câu từ văn phạm theo chiều rộng (BFS)}{6}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Từ phân tích quay lui đến Chart Parsing và giải thuật Earley}{6}{subsection.2.2.3}%
+\contentsline {section}{\numberline {2.3}Ngữ nghĩa, Dạng luận lý và Nguyên lý thành phần}{7}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Nghĩa độc lập ngữ cảnh, Dạng luận lý và Tình huống diễn ngôn}{7}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}Nguyên lý thành phần và Hợp nhất đặc trưng}{8}{subsection.2.3.2}%
+\contentsline {section}{\numberline {2.4}Giới hạn lựa chọn và Văn phạm ngữ nghĩa}{8}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Giới hạn lựa chọn (Selectional Restrictions)}{8}{subsection.2.4.1}%
+\contentsline {subsection}{\numberline {2.4.2}Văn phạm ngữ nghĩa và So khớp mẫu}{9}{subsection.2.4.2}%
+\contentsline {section}{\numberline {2.5}Biểu diễn tri thức, Frames và Truy xuất thông tin}{9}{section.2.5}%
+\contentsline {subsection}{\numberline {2.5.1}Cơ sở tri thức, suy luận và Frames}{9}{subsection.2.5.1}%
+\contentsline {subsection}{\numberline {2.5.2}Mô hình không gian vector TF-IDF và Xếp hạng lai}{10}{subsection.2.5.2}%
+\contentsline {section}{\numberline {2.6}Mở rộng LLM/RAG, kiểm soát căn cứ và ngữ cảnh hội thoại}{11}{section.2.6}%
+\contentsline {subsection}{\numberline {2.6.1}Vai trò của Retrieval và kiểm soát ảo giác (Answer Guard)}{11}{subsection.2.6.1}%
+\contentsline {subsection}{\numberline {2.6.2}Ngữ cảnh hội thoại cục bộ và xử lý nhập nhằng tham chiếu}{11}{subsection.2.6.2}%
+\contentsline {chapter}{\numberline {3}Phân tích bài toán và thiết kế}{12}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Miền bài toán và nguồn tri thức}{12}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Phạm vi bài toán}{12}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Tổ chức nguồn tri thức và khoảng trống dữ liệu}{12}{subsection.3.1.2}%
+\contentsline {section}{\numberline {3.2}Phân tích thiết kế theo từng phần của đề bài}{13}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Phần I: Văn phạm, sinh câu và phân tích cú pháp}{13}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Phần II: Diễn giải ngữ nghĩa và lựa chọn mở rộng LLM/RAG}{14}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Phần III: Xử lý ngữ cảnh hội thoại cục bộ}{14}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Phần IV: Định hướng kiểm duyệt nhãn và đánh giá 4 tầng}{15}{subsection.3.2.4}%
+\contentsline {section}{\numberline {3.3}Tổng kết định hướng thiết kế}{15}{section.3.3}%
+\contentsline {chapter}{\numberline {4}Triển khai và chạy thử}{16}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Môi trường và tổ chức mã nguồn}{16}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Luồng xử lý một câu hỏi}{17}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Baseline tuần tự của một lần xử lý}{18}{subsection.4.2.1}%
+\contentsline {paragraph}{Cài đặt Earley Parser.}{19}{section*.4}%
+\contentsline {paragraph}{Cài đặt tách câu đa ý định.}{19}{section*.5}%
+\contentsline {paragraph}{Cập nhật trạng thái hội thoại.}{20}{lstlisting.4.-3}%
+\contentsline {subsection}{\numberline {4.2.2}Sơ đồ luồng xử lý toàn hệ thống}{21}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Trình tự tương tác của một truy vấn}{21}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Luồng xử lý câu đa ý định}{21}{subsection.4.2.4}%
+\contentsline {section}{\numberline {4.3}Knowledge Base và retrieval}{24}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Sinh câu trả lời và Answer Guard}{24}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Giao diện chạy và API}{25}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Sinh dataset và pipeline đánh giá}{26}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Sơ đồ pipeline evaluation}{26}{subsection.4.6.1}%
+\contentsline {chapter}{\numberline {5}Đánh giá}{28}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Phương pháp và dữ liệu đánh giá}{28}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Kết quả trên tập 300 mẫu reviewed}{29}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Đánh giá toàn hệ thống và khả năng từ chối}{29}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Thử nghiệm với LLM thật}{30}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Kiểm thử qua HTTP API với câu hỏi tự do}{30}{section.5.5}%
+\contentsline {section}{\numberline {5.6}Phân tích lỗi}{31}{section.5.6}%
+\contentsline {section}{\numberline {5.7}Hạn chế của phép đánh giá}{32}{section.5.7}%
+\contentsline {section}{\numberline {5.8}Hướng cải thiện}{32}{section.5.8}%
+\contentsline {chapter}{\numberline {6}Tài liệu tham khảo}{34}{chapter.6}%
+\xpginauxfilefalse 

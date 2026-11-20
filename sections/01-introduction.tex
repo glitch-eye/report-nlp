@@ -1,40 +1,47 @@
 \chapter{Giới thiệu}
 
-\section{Bối cảnh và mục tiêu}
+\section{Bối cảnh và bài toán}
 
-Bài tập lớn xây dựng một Course Assistant trong miền tri thức của môn Xử lý ngôn ngữ tự nhiên (CO3085). Hệ thống hướng đến việc tiếp nhận câu hỏi tiếng Việt của sinh viên, nhận diện yêu cầu, xác định thực thể liên quan, truy xuất tài liệu môn học và tạo câu trả lời có căn cứ. Khác với một chatbot hỏi đáp mở, Course Assistant phải giới hạn câu trả lời trong knowledge base được cung cấp; khi dữ liệu không chứa câu trả lời hoặc không đủ bằng chứng, hệ thống cần thể hiện trạng thái thiếu thông tin thay vì suy đoán \cite{assignment}.
+Sinh viên thường phải tra cứu nhiều loại thông tin của một học phần: số tín chỉ, lịch học theo tuần, nội dung từng chương, yêu cầu bài tập lớn, tài liệu tham khảo và quy định. Những thông tin này nằm rải rác trong nhiều tệp, và cách đặt câu hỏi của sinh viên rất đa dạng. Bài tập lớn môn Xử lý ngôn ngữ tự nhiên (CO3085) \cite{assignment} yêu cầu xây dựng \emph{Course Assistant}, một trợ lý nhận câu hỏi tiếng Việt, xác định yêu cầu, truy xuất tài liệu và trả lời dựa trên tài liệu môn học.
 
-Bài toán có một số thách thức chính. Thứ nhất, cùng một ý định có thể được diễn đạt bằng nhiều cấu trúc câu và cách dùng từ khác nhau. Thứ hai, một câu có thể chứa nhiều yêu cầu độc lập, thường được nối bằng từ \emph{và}, nhưng không phải mọi từ nối đều biểu thị ranh giới giữa hai ý định. Thứ ba, truy xuất chỉ dựa trên từ khóa có thể bỏ sót tài liệu khi câu hỏi và tài liệu dùng cách diễn đạt khác nhau. Cuối cùng, một đoạn văn có liên quan chưa chắc chứa đủ thông tin để trả lời; do đó cần phân biệt retrieval relevance với answerability và kiểm soát citation.
-
-\section{Mục tiêu của hệ thống}
-
-Các mục tiêu triển khai được chia theo pipeline:
+Course Assistant khác một chatbot hỏi đáp mở ở chỗ nó chỉ được trả lời trong phạm vi knowledge base (KB) được cung cấp. Khi KB không chứa thông tin, hệ thống phải nói rõ là thiếu thông tin thay vì suy đoán. Yêu cầu này làm bài toán khó hơn ở bốn điểm:
 
 \begin{itemize}
-  \item \textbf{Phân tích cú pháp:} xây dựng CFG theo miền Course Assistant và sử dụng Earley parser để kiểm tra câu hỏi, tạo parse tree.
-  \item \textbf{Sinh và kiểm tra dữ liệu:} sinh các câu từ production của grammar trong giới hạn xác định; tạo JSONL chứa parse status, intent, entity và expected chunks để phục vụ kiểm thử.
-  \item \textbf{Diễn giải ngữ nghĩa:} ánh xạ parse tree thành semantic frame gồm intent, canonical entity IDs và trạng thái parse; hỗ trợ cả câu đơn ý định và câu đa ý định.
-  \item \textbf{Knowledge base và retrieval:} nạp dữ liệu môn học, chia thành các chunk có metadata nguồn, sau đó xếp hạng bằng TF-IDF cosine kết hợp tín hiệu semantic.
-  \item \textbf{Answer generation và grounding:} cung cấp context cho LLM adapter, yêu cầu câu trả lời dựa trên context và kiểm tra citation/factual claims bằng Answer Guard.
-  \item \textbf{Hội thoại và đánh giá:} lưu trạng thái hội thoại để giải một số tham chiếu đã định nghĩa; đánh giá từng tầng parser, semantic, retrieval và end-to-end.
+  \item \textbf{Đa dạng diễn đạt:} cùng một ý định có thể được hỏi bằng nhiều cấu trúc câu và từ ngữ, kể cả xen thuật ngữ tiếng Anh.
+  \item \textbf{Câu hỏi nhiều ý:} một câu có thể chứa nhiều yêu cầu độc lập, thường nối bằng \emph{``và''}. Tuy vậy, \emph{``và''} cũng xuất hiện trong cụm thuật ngữ (\emph{``CFG và Parsing''}) hoặc câu so sánh (\emph{``Chương 3 và Chương 4 khác nhau như thế nào?''}), nên không thể tách câu chỉ dựa vào từ này.
+  \item \textbf{Lệch từ vựng khi truy xuất:} câu hỏi và tài liệu có thể dùng cách gọi khác nhau (ví dụ \emph{``gán nhãn từ loại''} và \emph{``POS tagging''}), làm truy xuất theo từ khóa bỏ sót tài liệu liên quan.
+  \item \textbf{Liên quan nhưng chưa đủ để trả lời:} một đoạn tài liệu được truy xuất đúng chủ đề vẫn có thể không chứa thông tin mà câu hỏi cần (như phòng học hay hạn nộp chính thức). Hệ thống phải phân biệt mức độ liên quan (\emph{relevance}) với khả năng trả lời được (\emph{answerability}) và kiểm soát việc trích dẫn nguồn.
 \end{itemize}
 
-\section{Phạm vi triển khai và giới hạn}
+\section{Hướng tiếp cận}
 
-Phiên bản code được đối chiếu trong báo cáo là nhánh \texttt{feature/grammar-v5-multi-intent} của repository \texttt{glitch-eye/nlp}. Đây là nhánh phát triển đang được review, không đồng nghĩa với việc mọi chức năng đã được tích hợp vào nhánh \texttt{main}. Các kết quả và mô tả trong báo cáo cần được hiểu theo snapshot code và dữ liệu được ghi rõ ở từng phần.
+Nhóm kết hợp phân tích ngôn ngữ truyền thống với truy xuất và sinh câu trả lời có căn cứ (LLM/RAG \cite{lewis-rag}). Phần phân tích cú pháp và ngữ nghĩa giữ vai trò kiểm soát, còn truy xuất lai và mô hình sinh giúp trả lời linh hoạt hơn. Pipeline xử lý một câu hỏi gồm các bước:
 
-Phạm vi hiện thực bao gồm CFG tiếng Việt theo miền CO3085, bộ sinh câu có giới hạn, Earley parser, multi-intent clause validation, semantic frame, knowledge base, TF-IDF retrieval, assistant pipeline, mock/API LLM adapter, Answer Guard, dialogue state và các công cụ evaluation/label audit.
+\begin{enumerate}
+  \item \textbf{Phân tích cú pháp:} văn phạm phi ngữ cảnh (CFG) theo miền môn học và bộ phân tích Earley \cite{earley-1970} kiểm tra câu hỏi và tạo cây cú pháp. Với câu nhiều ý, hệ thống chỉ tách tại \emph{``và''} khi mọi mệnh đề con đều parse được độc lập.
+  \item \textbf{Diễn giải ngữ nghĩa:} cây cú pháp được chuyển thành semantic frame gồm intent, entity chuẩn hóa và trạng thái parse.
+  \item \textbf{Truy xuất:} KB được chia thành các chunk có metadata nguồn. Chunk được xếp hạng bằng TF-IDF cosine kết hợp tín hiệu khớp semantic frame \cite{manning-ir}.
+  \item \textbf{Sinh câu trả lời có căn cứ:} bằng chứng được đưa cho LLM adapter (mock offline hoặc API). Answer Guard kiểm tra câu hỏi trước khi gọi mô hình và kiểm tra citation, con số, ngày, giờ sau khi mô hình trả lời.
+  \item \textbf{Hội thoại cục bộ:} trạng thái của lượt liền trước được lưu để giải một số dạng tham chiếu như \emph{``nó''}, \emph{``chương này''} hay \emph{``còn chương sau?''}. Khi thiếu hoặc mơ hồ tiền từ, hệ thống hỏi lại.
+\end{enumerate}
 
-Các giới hạn cần được giữ rõ:
+\section{Đóng góp của báo cáo}
+
+Báo cáo trình bày: (i) thiết kế và hiện thực pipeline trên cho miền CO3085; (ii) bộ công cụ sinh dữ liệu có nhãn, rà soát nhãn và đánh giá riêng từng tầng (parser, semantic, retrieval, end-to-end), để khi có lỗi có thể xác định tầng gây ra lỗi; (iii) kết quả đánh giá từ ba nguồn dữ liệu khác nhau cùng phân tích lỗi và giới hạn của từng phép đo (Chương~5).
+
+\section{Phạm vi và giới hạn}
+
+Mã nguồn được đối chiếu trong báo cáo thuộc nhánh \texttt{feature/grammar-v5-multi-intent} của repository \texttt{glitch-eye/nlp} \cite{nlp-repository}. Đây là nhánh đang phát triển và chưa chắc đã được tích hợp vào nhánh \texttt{main}. Số liệu và mô tả cần được hiểu theo snapshot mã và dữ liệu ghi ở từng phần. Hệ thống có các giới hạn sau:
+
 \begin{itemize}
-  \item CFG là grammar theo miền và theo các mẫu đã thiết kế, không phải bộ phân tích tiếng Việt tổng quát. Câu tự nhiên nằm ngoài production có thể bị \texttt{UNPARSED}.
-  \item Multi-intent chỉ được tạo khi các clause sau tách đều parse độc lập thành công bằng CFG hiện tại. Cơ chế này không giải quyết mọi cấu trúc phối hợp trong tiếng Việt.
-  \item Dialogue manager dùng các pattern tham chiếu được định nghĩa trước, không phải mô hình đồng tham chiếu tổng quát.
-  \item Retrieval dùng TF-IDF và tín hiệu semantic dựa trên luật; chưa phải dense retrieval hoặc neural reranker.
-  \item Mock LLM phục vụ chạy offline và kiểm thử tính nhất quán, không đại diện cho chất lượng của một mô hình ngôn ngữ thật.
-  \item Citation guard xác minh citation có trỏ đến chunk đã cung cấp và kiểm tra một số dạng facts có cấu trúc; điều này chưa chứng minh toàn bộ câu trả lời được entailment bởi nguồn.
+  \item CFG được viết theo miền và theo các mẫu câu đã thiết kế, không phải bộ phân tích tiếng Việt tổng quát. Câu tự nhiên nằm ngoài các luật có thể bị gán \texttt{UNPARSED}.
+  \item Multi-intent chỉ được tạo khi mọi mệnh đề tách ra đều parse độc lập thành công; cơ chế này không bao phủ mọi cấu trúc phối hợp của tiếng Việt.
+  \item Bộ xử lý hội thoại dùng các mẫu tham chiếu định nghĩa trước, không phải mô hình đồng tham chiếu tổng quát.
+  \item Retrieval dùng TF-IDF và tín hiệu semantic dựa trên luật, chưa dùng dense retrieval hay neural reranker.
+  \item Mock LLM phục vụ chạy offline và kiểm thử, không phản ánh chất lượng của mô hình ngôn ngữ thật.
+  \item Answer Guard xác minh citation trỏ tới chunk đã gửi cho mô hình và kiểm tra một số dạng dữ kiện có cấu trúc (số, ngày, giờ, URL). Điều này chưa chứng minh câu trả lời được nguồn hỗ trợ đầy đủ.
 \end{itemize}
 
 \section{Bố cục báo cáo}
 
-Chương 2 trình bày các kiến thức nền được sử dụng trong CFG, Earley parsing, semantic frame, retrieval, RAG và dialogue state. Chương 3 phân tích miền bài toán, kiến trúc pipeline và các quyết định thiết kế. Chương 4 mô tả module, môi trường và cách chạy các thành phần. Chương 5 trình bày kết quả evaluation hiện có, phân tích lỗi và giới hạn của phép đo. Chương 6 liệt kê tài liệu tham khảo.
+Chương~2 trình bày kiến thức nền về CFG, Earley parsing, semantic frame, retrieval, RAG và dialogue state. Chương~3 phân tích miền bài toán, nguồn tri thức và các quyết định thiết kế. Chương~4 mô tả các module, môi trường và cách chạy hệ thống. Chương~5 trình bày kết quả đánh giá, phân tích lỗi và độ tin cậy của từng phép đo. Chương~6 liệt kê tài liệu tham khảo.

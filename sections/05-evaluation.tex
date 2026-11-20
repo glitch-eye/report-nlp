@@ -1,30 +1,164 @@
 \chapter{Đánh giá}
 
-\section{Kết quả đánh giá theo từng tầng}
+\section{Phương pháp và dữ liệu đánh giá}
 
-Phép chạy tái lập hiện có dùng \texttt{samples\_labeled.jsonl}: 300 reviewed samples (\texttt{samples\_labeled.jsonl}). Kết quả được chạy bằng virtual environment của dự án với \texttt{--no-bypass-unknown}:
+Hệ thống được đánh giá riêng từng tầng (parser, semantic, retrieval, end-to-end) thay vì gộp thành một chỉ số, để khi có lỗi có thể xác định tầng gây ra lỗi. Chương này dùng ba nguồn kết quả, khác nhau về quy mô, mô hình sinh câu trả lời và độ tin cậy của nhãn:
 
-\begin{center}
-\begin{tabular}{lr}
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}p{0.2\textwidth}p{0.17\textwidth}p{0.2\textwidth}p{0.32\textwidth}@{}}
+\toprule
+Nguồn & Quy mô & Mô hình sinh & Nhãn và mục đích \\
+\midrule
+Tập reviewed (18/11/2026) & 300 câu sinh từ grammar & Mock extractive offline & Nhãn \texttt{data\_source\_review}; đo parser, semantic, retrieval, end-to-end \\
+Smoke test LLM thật (19/11/2026) & 5 câu & \texttt{gemini-3.5-flash-lite} (ghi nhận \texttt{real\_api}) & Chưa có nhãn gold; chỉ chẩn đoán \\
+Kiểm thử HTTP API (20/11/2026) & 20 câu, 16 câu có kỳ vọng & Server không báo mô hình & Câu tự do và hội thoại; đo hành vi qua API \\
+\bottomrule
+\end{tabular}
+\caption{Ba nguồn kết quả đánh giá được sử dụng.}
+\end{table}
+
+Có ba điểm cần lưu ý khi đọc các kết quả:
+
+\begin{itemize}
+  \item 300 câu của tập reviewed đều do grammar sinh ra và đều ở trạng thái \texttt{PARSED}. Vì vậy các chỉ số parser và semantic trên tập này đo mức nhất quán trong phạm vi grammar, không đo khả năng hiểu câu hỏi tự nhiên.
+  \item Nhãn của tập reviewed được rà soát bằng cách đối chiếu với dữ liệu nguồn (\texttt{label\_provenance = data\_source\_review}). Đây không phải rà soát độc lập của người chấm, nên các chỉ số về answerability cần đọc kèm phần \ref{sec:eval-answerability}.
+  \item Tập reviewed có phân bố intent lệch: \texttt{GET\_SCHEDULE} 86 câu, \texttt{GET\_ASSIGNMENT} 77, \texttt{GET\_TOPIC} 69, \texttt{GET\_RESOURCE} 39, \texttt{GET\_COURSE\_INFO} 15, \texttt{GET\_RULE} 8, \texttt{UNKNOWN} 3, \texttt{GET\_LO} 2, \texttt{GET\_DEADLINE} 1. Tập không có mẫu \texttt{MULTI\_INTENT} hay \texttt{UNPARSED}, nên không đánh giá được chức năng multi-intent.
+\end{itemize}
+
+\section{Kết quả trên tập 300 mẫu reviewed}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lr@{}}
 \toprule
 Chỉ số & Kết quả \\
 \midrule
-Số mẫu reviewed & 300 \\
-Parser accuracy / exact tree match & 300/300 (100\%) / 300/300 (100\%) \\
-Semantic intent accuracy & 300/300 (100\%); entity F1 micro 100\% (89 TP) \\
-Retrieval Hit@3 độc lập & 241/283 (85,2\%) \\
-Refusal accuracy end-to-end & 4/17 (23,5\%) \\
-Over-answering trên \texttt{INSUFFICIENT\_CONTEXT} & 13/14 \\
+Parse-status accuracy & 300/300 (100\%) \\
+Exact parse-tree match & 300/300 (100\%) \\
+Semantic intent accuracy & 300/300 (100\%) \\
+Entity F1 (micro) & 100\% \\
+Retrieval Hit@3 (chỉ dùng câu hỏi gốc) & 241/283 (85,2\%) \\
+Tỷ lệ loại đúng câu \texttt{UNKNOWN} khi truy xuất & 100\% \\
+Retrieval hit trong pipeline end-to-end & 264/283 (93,3\%) \\
+Citation hợp lệ trong các câu \texttt{ANSWERED} & 296/296 (100\%) \\
+Số mẫu \texttt{NEEDS\_REVIEW} & 0 \\
 \bottomrule
 \end{tabular}
-\end{center}
+\caption{Kết quả trên 300 mẫu reviewed (Mock LLM, KB đầy đủ 76 chunk).}
+\end{table}
 
-Dataset này là tập 300 mẫu đã rà soát, nhưng không chứa mẫu \texttt{MULTI\_INTENT}; vì vậy không thể dùng các metric này để khẳng định độ chính xác multi-intent. Parser và semantic đạt 100% trên tập con này, không chứng minh khả năng tổng quát ngoài tập. Retrieval Hit@3 độc lập là 241/283 (85,2%), không phải 99,9%. Trong phép end-to-end, retrieval hit count khác (264/283; 93,3%) do đây là pipeline/metric riêng, không nên gộp hai con số.
+Parser và semantic đạt 100\%, điều này phù hợp với việc các câu được sinh từ chính grammar và chỉ cho thấy parser, bộ sinh câu và semantic frame nhất quán với nhau. Hai con số retrieval 85,2\% và 93,3\% đến từ hai phép đo khác nhau: Hit@3 độc lập chỉ dùng câu hỏi gốc, không dùng gợi ý intent hay entity chuẩn, còn con số trong pipeline end-to-end do luồng đầy đủ tạo ra. Hai con số không nên gộp hay thay thế cho nhau, và báo cáo dùng 85,2\% làm chỉ số retrieval chính vì đây là phép đo bảo thủ hơn.
 
-\section{Đánh giá toàn hệ thống}
+\section{Đánh giá toàn hệ thống và khả năng từ chối}
+\label{sec:eval-answerability}
 
-Trong artifact, end-to-end có 296 ANSWERED; 296/296 citation hợp lệ theo kiểm tra của guard (100%). Tuy nhiên, refusal accuracy chỉ 4/17 (23,5%); 13 mẫu \texttt{INSUFFICIENT\_CONTEXT} vẫn bị ANSWERED. Không có \texttt{NEEDS\_REVIEW} trong artifact. LLM provider là mock, do đó không đo chất lượng của LLM thật.
+Ma trận giữa nhãn kỳ vọng và trạng thái thực tế trên 300 mẫu:
 
-\section{Phân tích lỗi và hạn chế}
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Nhãn kỳ vọng $\rightarrow$ trạng thái thực tế & Số mẫu & Đúng? \\
+\midrule
+\texttt{EXPECTED\_CONTEXT} $\rightarrow$ \texttt{ANSWERED} & 283 & có \\
+\texttt{NO\_RELEVANT\_CONTEXT} $\rightarrow$ \texttt{NO\_RELEVANT\_CONTEXT} & 3 & có \\
+\texttt{INSUFFICIENT\_CONTEXT} $\rightarrow$ \texttt{INSUFFICIENT\_CONTEXT} & 1 & có \\
+\texttt{INSUFFICIENT\_CONTEXT} $\rightarrow$ \texttt{ANSWERED} & 13 & không \\
+\bottomrule
+\end{tabular}
+\caption{Ma trận nhãn kỳ vọng và trạng thái thực tế (Mock LLM).}
+\end{table}
 
-Các lỗi retrieval tập trung ở câu hỏi chương/tuần: FAQ hoặc chunk lân cận đôi khi xếp cao hơn chunk kỳ vọng. Nhóm lỗi nghiêm trọng hơn là over-answering: 13/14 câu thiếu context vẫn được trả lời. Cần phân biệt relevance với sufficiency, kiểm tra nhãn answerability và cải thiện context guard. Citation validity chỉ xác nhận nguồn được trích thuộc context đã gửi, không chứng minh entailment đầy đủ.
+Nếu lấy nhãn làm chuẩn, refusal accuracy là 4/17 (23,5\%) và 13 trong 14 mẫu \texttt{INSUFFICIENT\_CONTEXT} vẫn được trả lời. Kết quả này chưa nên đọc là lỗi của hệ thống, vì khi đối chiếu 14 mẫu đó với KB, phần lớn nhãn có vẻ không khớp với dữ liệu:
+
+\begin{itemize}
+  \item Chín câu hỏi về tuần học hoặc chương thuộc tuần nào (ví dụ \emph{``tuần thứ 8 các chủ đề nào được giới thiệu?''}, \emph{``chương 5 được xếp vào tuần học nào?''}) đều có thể trả lời từ \texttt{schedule.txt}, vốn có đủ mục \texttt{WEEK 01}--\texttt{WEEK 15}.
+  \item Câu hỏi về L.O.4.2 có thể trả lời từ \texttt{course\_info.txt}, nơi mục \texttt{LO4.2} có mô tả.
+  \item Chỉ câu hỏi về hạn nộp bài tập lớn là thiếu dữ kiện rõ ràng, vì KB chỉ có lịch mẫu, không có lịch nộp chính thức.
+\end{itemize}
+
+Như vậy 23,5\% không phản ánh đúng khả năng từ chối của hệ thống. Cần rà soát lại nhãn của 14 mẫu này trước khi dùng chỉ số refusal. Kết quả đáng tin cậy hơn hiện có là ba câu ngoài miền (thời tiết, chính trị, nhờ giải bài tập) được hệ thống xử lý đúng là \texttt{NO\_RELEVANT\_CONTEXT}, nhưng cỡ mẫu này quá nhỏ để rút ra kết luận. Citation hợp lệ 296/296 chỉ cho biết nguồn được trích nằm trong các chunk đã gửi cho mô hình, không chứng minh nguồn đó hỗ trợ nội dung câu trả lời.
+
+\section{Thử nghiệm với LLM thật}
+
+Năm câu hỏi chẩn đoán được chạy với \texttt{gemini-3.5-flash-lite}. Telemetry ghi nhận cả 5 dòng là \texttt{real\_api}, không có fallback, và 6/6 lời gọi API thành công.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}p{0.5\textwidth}lrr@{}}
+\toprule
+Câu hỏi & Trạng thái & Số lần gọi & Độ trễ sinh (s) \\
+\midrule
+CO3085 có mấy tín chỉ? & \texttt{ANSWERED} & 1 & 6,03 \\
+Chương 6 nói về gì? & \texttt{ANSWERED} & 1 & 7,91 \\
+Tuần 5 học những nội dung gì? & \texttt{ANSWERED} & 1 & 7,12 \\
+Chương 4 nói về gì và Tuần 5 học gì? & \texttt{ANSWERED} & 2 & 14,50 \\
+Thời tiết TP.HCM hôm nay thế nào? & \texttt{INSUFFICIENT\_CONTEXT} & 1 & 7,66 \\
+\bottomrule
+\end{tabular}
+\caption{Kết quả smoke test với LLM thật. Độ trễ sinh trung bình 8,64 s.}
+\end{table}
+
+Câu hỏi đa ý định phát sinh hai lần gọi API, đúng với thiết kế xử lý từng mệnh đề riêng rồi gộp kết quả. Câu hỏi về thời tiết bị từ chối đúng. Tuy nhiên đây chỉ là 5 mẫu, chưa có nhãn gold và không có đánh giá của LLM-as-judge, nên kết quả chỉ cho thấy luồng gọi mô hình thật hoạt động, không đo chất lượng câu trả lời.
+
+\section{Kiểm thử qua HTTP API với câu hỏi tự do}
+
+Bộ 20 câu gồm câu truy xuất, câu trả lời và hội thoại, chạy qua server tại \texttt{127.0.0.1:8000} với $k=3$. Server không báo tên mô hình sinh (\texttt{real\_model\_verified} không xác định), nên kết quả không được quy cho một mô hình cụ thể.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lr@{}}
+\toprule
+Chỉ số & Kết quả \\
+\midrule
+Số câu chạy / có kỳ vọng / không có nhãn & 20 / 16 / 4 \\
+Số câu đạt & 9/16 (56,3\%) \\
+Intent accuracy & 50\% ($n=14$) \\
+Entity recall / exact-set & 90\% ($n=10$) \\
+Tỷ lệ \texttt{/answer} trả về \texttt{UNPARSED} & 70\% \\
+Thành công HTTP & 100\% \\
+Độ trễ trung bình / p95 & 1050 ms / 5228 ms \\
+\bottomrule
+\end{tabular}
+\caption{Kết quả kiểm thử HTTP API.}
+\end{table}
+
+Cả 7 câu không đạt đều có chung nguyên nhân: parser không nhận ra intent (\texttt{intent = None}). Đó là các câu \emph{``PCFG là gì?''}, \emph{``Các phương pháp thống kê được học ở chương nào?''}, \emph{``Nội dung môn học liên quan đến xác suất là gì?''}, \emph{``Tuần 4 học về nội dung gì?''}, \emph{``Các tuần học có nội dung nào liên quan đến mô hình thống kê?''}, \emph{``Tóm tắt những chủ đề chính của môn học.''} và câu \emph{``PCFG là gì?''} trong nhóm \texttt{/answer}. Câu \emph{``Tuần 4 học về nội dung gì?''} còn không trích được entity \texttt{WEEK\_04}, trong khi hai câu cùng dạng về tuần 2 và tuần 3 đạt, cho thấy parser nhạy với cách diễn đạt.
+
+Kết quả này tương phản rõ với 100\% trên tập reviewed. Cùng một parser đạt 100\% trên câu do grammar sinh nhưng chỉ đạt intent accuracy 50\% trên câu viết tự do, vì phạm vi của CFG hẹp hơn cách người dùng đặt câu hỏi. Con số 50\% trên $n=14$ cho biết mức độ của vấn đề, nhưng cỡ mẫu nhỏ nên chưa phải ước lượng chính xác. Việc câu bị \texttt{UNPARSED} không nhất thiết dẫn tới câu trả lời sai, vì pipeline vẫn truy xuất và trả lời được một số câu (ví dụ câu về PCFG vẫn được trả lời kèm citation). Tuy nhiên ghi chú của test cho biết KB chỉ nêu PCFG được học ở chương nào chứ không có định nghĩa, nên cần kiểm tra thủ công xem nội dung định nghĩa trong câu trả lời có được KB hỗ trợ hay không.
+
+Lần chạy này chưa tính được chỉ số retrieval vì bộ 20 câu chưa gán chunk vàng (số mẫu có nhãn bằng 0). Repository đã có phiên bản 2.0 của bộ kiểm thử với 39 câu (13 retrieval, 26 answer) có gold chunk và dữ kiện kỳ vọng, nhưng chưa có artifact kết quả khi chạy bộ này.
+
+\section{Phân tích lỗi}
+
+\textbf{Retrieval.} Trong tập reviewed, lỗi retrieval tập trung ở câu hỏi về chương và tuần. Chunk FAQ hoặc chunk của tuần lân cận đôi khi được xếp trên chunk kỳ vọng. Ví dụ \emph{``chương 3 bao gồm những kiến thức nào?''} trả về \texttt{faq-q3-2}, \texttt{faq-q4-3}, \texttt{faq-q7-6} thay vì chunk của Chương 3; \emph{``Trong tuần 9 môn học tập trung vào kiến thức nào?''} trả về chunk tuần 11 thay vì tuần 9. Điều này cho thấy tín hiệu khớp entity chưa đủ mạnh so với độ tương đồng từ vựng của các chunk FAQ.
+
+\textbf{Chất lượng nhãn.} Một số lỗi end-to-end có thể do nhãn chứ không do hệ thống. Ngoài 14 mẫu \texttt{INSUFFICIENT\_CONTEXT} ở trên, các câu dạng \emph{``chương 7 có đề cập đến PCFG không?''} có chunk kỳ vọng là chunk của Chương 7, trong khi câu trả lời đúng có thể là phủ định và dựa trên chunk khác. Nhóm câu hỏi này cần được rà soát lại.
+
+\textbf{Phạm vi grammar.} Với câu hỏi tự do, lỗi chủ yếu nằm ở tầng parser như đã phân tích ở trên. Mở rộng luật hoặc thêm cơ chế dự phòng khi \texttt{UNPARSED} sẽ giúp ích nhiều hơn việc tinh chỉnh retrieval.
+
+\section{Hạn chế của phép đánh giá}
+
+\begin{itemize}
+  \item Tập 300 mẫu do grammar sinh, nên chỉ số parser và semantic không chứng minh khả năng tổng quát. Tập cũng không có mẫu multi-intent, nên chưa có kết luận định lượng cho chức năng này.
+  \item Nhãn answerability chưa được rà soát độc lập, và ít nhất 10 trong 14 nhãn \texttt{INSUFFICIENT\_CONTEXT} có vẻ không khớp với KB. Chỉ số refusal 23,5\% vì vậy chưa đáng tin cậy.
+  \item Các kết quả offline dùng Mock LLM, không phản ánh chất lượng của mô hình thật. Phần thử nghiệm với LLM thật chỉ có 5 mẫu và chưa có nhãn gold.
+  \item Citation hợp lệ và các kiểm tra số, ngày, giờ của Answer Guard không đảm bảo câu trả lời được nguồn hỗ trợ đầy đủ. Chưa có đánh giá faithfulness bằng người hoặc bằng judge đã hiệu chỉnh.
+  \item Ba nguồn kết quả được chạy ở ba thời điểm với dữ liệu và cấu hình khác nhau, nên không nên so sánh trực tiếp các con số giữa chúng.
+\end{itemize}
+
+\section{Hướng cải thiện}
+
+\begin{enumerate}
+  \item Rà soát lại nhãn \texttt{INSUFFICIENT\_CONTEXT} và chạy lại đánh giá end-to-end bằng mã Answer Guard hiện tại.
+  \item Chạy bộ kiểm thử 39 câu phiên bản 2.0 (có gold chunk) để có số liệu retrieval trên câu tự do, và bổ sung các mẫu multi-intent và \texttt{UNPARSED} vào tập đánh giá.
+  \item Mở rộng grammar theo các dạng câu thất bại ở trên, hoặc thêm bước dự phòng dựa trên retrieval khi câu bị \texttt{UNPARSED}.
+  \item Tăng trọng số tín hiệu entity cho câu hỏi theo chương và tuần để giảm việc chunk FAQ lấn át chunk nguồn chính.
+  \item Chạy đánh giá với LLM thật trên tập có nhãn gold do người rà soát để đo chất lượng câu trả lời.
+\end{enumerate}
